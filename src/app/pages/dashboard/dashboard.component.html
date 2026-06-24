@@ -1,0 +1,32 @@
+<section class="page">
+  <header class="page__head">
+    <h2 class="page__title">Genel Bakış</h2>
+    <p class="page__subtitle">account-hr iskelet — backend bağlantı durumu</p>
+  </header>
+
+  <div class="cards">
+    <article class="card">
+      <h3 class="card__label">Backend API</h3>
+
+      @switch (state()) {
+        @case ('loading') {
+          <p class="status status--loading">
+            <span class="status__dot"></span> Kontrol ediliyor…
+          </p>
+        }
+        @case ('up') {
+          <p class="status status--up">
+            <span class="status__dot"></span> API: UP
+          </p>
+        }
+        @case ('unreachable') {
+          <p class="status status--down">
+            <span class="status__dot"></span> API: unreachable
+          </p>
+        }
+      }
+
+      <p class="card__hint">GET /api/health</p>
+    </article>
+  </div>
+</section>

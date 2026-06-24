@@ -1,0 +1,22 @@
+.layout {
+  min-height: 100vh;
+
+  &__main {
+    margin-left: 240px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  &__content {
+    flex: 1;
+    padding: 32px;
+  }
+}
+
+// Mobile: collapse to a single column, sidebar becomes a normal block.
+@media (max-width: 768px) {
+  .layout__main {
+    margin-left: 0;
+  }
+}
