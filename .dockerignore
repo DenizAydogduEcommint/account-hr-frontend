@@ -1,0 +1,9 @@
+node_modules
+dist
+.angular
+.git
+.github
+.vscode
+.idea
+*.log
+.DS_Store
