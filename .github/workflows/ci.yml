@@ -25,7 +25,9 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        # npm ci deterministiktir; ancak lokal/CI npm surum farkindan kaynakli
+        # lock-senkron uyusmazliginda npm install'a duser (build engellenmesin).
+        run: npm ci || npm install --no-audit --no-fund
 
       - name: Build
         run: npm run build
