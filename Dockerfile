@@ -3,7 +3,8 @@ FROM node:18-alpine AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+# npm ci deterministik; npm surum-drift lock uyusmazliginda npm install'a duser.
+RUN npm ci || npm install --no-audit --no-fund
 
 COPY . .
 RUN npm run build
