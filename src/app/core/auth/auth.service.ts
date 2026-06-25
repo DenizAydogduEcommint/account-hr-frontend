@@ -1,7 +1,7 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, of, tap } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { Observable, of, tap, throwError } from 'rxjs';
+import { catchError, finalize, map, shareReplay } from 'rxjs/operators';
 
 import { environment } from '../../../environments/environment';
 import {
@@ -35,6 +35,9 @@ export class AuthService {
   /** Şablonlarda kolay kullanım için: oturum açık mı? */
   readonly isLoggedIn = computed(() => this._currentUser() !== null);
 
+  /** Devam eden tek refresh çağrısı; eşzamanlı 401'ler bunu paylaşır. */
+  private refresh$: Observable<AuthResponse> | null = null;
+
   /** Access token (interceptor için). */
   get accessToken(): string | null {
     return localStorage.getItem(ACCESS_TOKEN_KEY);
@@ -67,16 +70,34 @@ export class AuthService {
   /**
    * POST /auth/refresh — access token süresi dolunca yeni access + rotate
    * edilmiş refresh alır. Refresh token yoksa hata fırlatır (oturum yok).
+   *
+   * Refresh-token rotation nedeniyle eşzamanlı 401'lerin her biri ayrı bir
+   * refresh tetiklerse biri diğerlerini geçersiz kılar → rastgele logout.
+   * Bunu önlemek için devam eden tek bir refresh çağrısı paylaşılır
+   * (`shareReplay(1)`); tamamlanınca/hata alınca temizlenir.
    */
   refresh(): Observable<AuthResponse> {
+    if (this.refresh$) {
+      return this.refresh$;
+    }
     const token = this.refreshToken;
     if (!token) {
-      throw new Error('Refresh token yok');
+      return throwError(() => new Error('Refresh token yok'));
     }
     const body: RefreshRequest = { refreshToken: token };
-    return this.http
+    this.refresh$ = this.http
       .post<AuthResponse>(`${this.baseUrl}/auth/refresh`, body)
-      .pipe(tap((res) => this.applyAuthResponse(res)));
+      .pipe(
+        tap((res) => this.applyAuthResponse(res)),
+        // shareReplay önce: tüm eşzamanlı abonelere tek sonucu yayınlar.
+        // finalize sonra: multicast tamamen bitince refresh$ temizlenir, böylece
+        // sonuç yayınlanmadan refresh$ erkenden null'a düşüp tekrar refresh tetiklenmez.
+        shareReplay(1),
+        finalize(() => {
+          this.refresh$ = null;
+        }),
+      );
+    return this.refresh$;
   }
 
   /**
@@ -105,10 +126,14 @@ export class AuthService {
     }
     return this.http.get<AuthUser>(`${this.baseUrl}/auth/me`).pipe(
       tap((user) => this._currentUser.set(user)),
-      catchError(() => {
-        // Token geçersiz/expired ve refresh de başarısız olduysa interceptor
-        // zaten temizler; yine de güvenli tarafta kalalım.
-        this.clearSession();
+      catchError((error: HttpErrorResponse) => {
+        // Yalnızca gerçek auth hatalarında (401/403) oturumu temizle. Ağ
+        // hatası (status 0) veya 5xx gibi geçici sorunlarda token'ları KORU;
+        // sonraki gerçek auth hatası logout'u zaten tetikler. Aksi halde
+        // geçici backend kesintisi kullanıcıyı kalıcı olarak çıkarırdı.
+        if (error.status === 401 || error.status === 403) {
+          this.clearSession();
+        }
         return of(null);
       }),
     );

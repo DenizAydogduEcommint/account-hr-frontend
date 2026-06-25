@@ -1,4 +1,5 @@
 import {
+  HttpContextToken,
   HttpErrorResponse,
   HttpEvent,
   HttpHandlerFn,
@@ -14,6 +15,13 @@ import { AuthService } from './auth.service';
 
 /** Token ekleme/yenileme atlanacak uçlar (login & refresh kendileri token taşımaz). */
 const AUTH_SKIP_PATHS = ['/auth/login', '/auth/refresh'];
+
+/**
+ * Refresh sonrası tekrar gönderilen isteği işaretler. İşaretli bir istek
+ * tekrar 401 alırsa yeniden refresh DENENMEZ — sonsuz refresh/retry döngüsünü
+ * önler; hata yukarı propagate edilir ve oturum kapatılır.
+ */
+const RETRIED = new HttpContextToken<boolean>(() => false);
 
 function isApiRequest(url: string): boolean {
   return url.startsWith(environment.apiBaseUrl);
@@ -48,7 +56,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authedReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      // Sadece 401'de ve token mevcutken yenilemeyi dene.
+      // Zaten bir kez retry edilmiş istek yine 401 aldıysa tekrar refresh
+      // deneme — döngüyü kır, oturumu kapat ve hatayı propagate et.
+      if (error.status === 401 && req.context.get(RETRIED)) {
+        auth.clearSession();
+        void router.navigate(['/login']);
+        return throwError(() => error);
+      }
+      // Sadece 401'de ve token mevcutken (ve henüz retry edilmemişse) yenile.
       if (error.status === 401 && auth.refreshToken) {
         return handle401(req, next, auth, router);
       }
@@ -65,7 +80,14 @@ function handle401(
   router: Router,
 ): Observable<HttpEvent<unknown>> {
   return auth.refresh().pipe(
-    switchMap((res) => next(withAuthHeader(req, res.accessToken))),
+    switchMap((res) => {
+      // Tekrar gönderilen isteği RETRIED ile işaretle; yeniden 401 alırsa
+      // üstteki catchError döngüyü kırar.
+      const retriedReq = withAuthHeader(req, res.accessToken).clone({
+        context: req.context.set(RETRIED, true),
+      });
+      return next(retriedReq);
+    }),
     catchError((refreshError) => {
       auth.clearSession();
       void router.navigate(['/login']);
