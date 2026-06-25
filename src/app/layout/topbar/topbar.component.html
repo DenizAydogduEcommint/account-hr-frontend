@@ -1,8 +1,8 @@
 <header class="topbar">
-  <h1 class="topbar__title">Dashboard</h1>
+  <h1 class="topbar__title">Genel Bakış</h1>
   <div class="topbar__actions">
     @if (user(); as u) {
-      <span class="topbar__user">{{ u.fullName }}</span>
+      <span class="topbar__user">{{ u.fullName || u.email }}</span>
       <span class="topbar__avatar">{{ initials() }}</span>
     }
     <button class="topbar__logout" type="button" (click)="logout()">Çıkış</button>

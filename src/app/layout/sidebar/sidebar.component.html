@@ -1,19 +1,27 @@
 <aside class="sidebar">
   <div class="brand">
-    <span class="brand__mark">AH</span>
+    <span class="brand__mark">a/h</span>
     <span class="brand__name">account-hr</span>
   </div>
 
   <nav class="nav">
-    @for (item of nav; track item.path) {
-      <a
-        class="nav__link"
-        [routerLink]="item.path"
-        routerLinkActive="nav__link--active"
-      >
+    <!-- Tek gerçek route: Dashboard -->
+    <a
+      class="nav__link"
+      routerLink="/dashboard"
+      routerLinkActive="nav__link--active"
+    >
+      <span class="nav__icon">▣</span>
+      <span class="nav__label">Dashboard</span>
+    </a>
+
+    <!-- Yakında gelecek E3 ekranları (placeholder, routerLink yok) -->
+    @for (item of nav; track item.label) {
+      <span class="nav__link nav__link--disabled" title="Yakında">
         <span class="nav__icon">{{ item.icon }}</span>
         <span class="nav__label">{{ item.label }}</span>
-      </a>
+        <span class="nav__soon">yakında</span>
+      </span>
     }
   </nav>
 

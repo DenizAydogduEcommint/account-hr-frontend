@@ -1,5 +1,8 @@
+@use 'styles/tokens' as *;
+
 .layout {
   min-height: 100vh;
+  background: $ec-gray-2;
 
   &__main {
     margin-left: 240px;
@@ -10,13 +13,18 @@
 
   &__content {
     flex: 1;
-    padding: 32px;
+    padding: $space-4;
+    background: $ec-gray-2;
   }
 }
 
-// Mobile: collapse to a single column, sidebar becomes a normal block.
+// Mobile: collapse to a single column; sidebar becomes a top horizontal bar.
 @media (max-width: 768px) {
   .layout__main {
     margin-left: 0;
+  }
+
+  .layout__content {
+    padding: $space-2;
   }
 }

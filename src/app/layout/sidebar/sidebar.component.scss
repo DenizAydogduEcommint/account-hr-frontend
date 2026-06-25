@@ -1,3 +1,5 @@
+@use 'styles/tokens' as *;
+
 .sidebar {
   width: 240px;
   height: 100vh;
@@ -6,24 +8,24 @@
   left: 0;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
-  border-right: 1px solid var(--gray-200);
-  padding: 24px 16px;
+  background: $ec-navy;
+  padding: $space-3 $space-2;
+  z-index: 20;
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 0 8px 24px;
+  padding: 0 8px $space-3;
 
   &__mark {
     display: grid;
     place-items: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: var(--primary-600);
+    width: 36px;
+    height: 36px;
+    border-radius: $radius-input;
+    background: $ec-primary;
     color: #fff;
     font-weight: 700;
     font-size: 13px;
@@ -31,8 +33,9 @@
 
   &__name {
     font-weight: 700;
-    font-size: 15px;
-    color: var(--gray-900);
+    font-size: 16px;
+    color: #ffffff;
+    letter-spacing: 0.2px;
   }
 }
 
@@ -47,34 +50,102 @@
     align-items: center;
     gap: 12px;
     padding: 10px 12px;
-    border-radius: 8px;
-    color: var(--gray-600);
+    border-radius: $radius-input;
+    color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
     font-weight: 500;
     font-size: 14px;
+    border-left: 3px solid transparent;
     transition: background 150ms ease, color 150ms ease;
 
     &:hover {
-      background: var(--gray-50);
-      color: var(--gray-900);
+      background: rgba(255, 255, 255, 0.06);
+      color: #ffffff;
     }
 
+    // Aktif öğe: teal vurgu (sol kenarlık + metin).
     &--active {
-      background: var(--primary-50);
-      color: var(--primary-700);
+      background: rgba(0, 178, 122, 0.14);
+      color: $ec-primary-light;
+      border-left-color: $ec-primary;
+    }
+
+    // Yakında gelecek ekranlar: soluk, etkileşimsiz.
+    &--disabled {
+      color: rgba(255, 255, 255, 0.32);
+      cursor: not-allowed;
+
+      &:hover {
+        background: transparent;
+        color: rgba(255, 255, 255, 0.32);
+      }
     }
   }
 
   &__icon {
-    font-size: 16px;
+    font-size: 15px;
     width: 20px;
     text-align: center;
+  }
+
+  &__label {
+    flex: 1;
+  }
+
+  &__soon {
+    font-size: 10px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.3);
+    text-transform: lowercase;
   }
 }
 
 .sidebar__footer {
-  padding: 16px 8px 0;
+  padding: $space-2 8px 0;
   font-size: 12px;
-  color: var(--gray-600);
-  border-top: 1px solid var(--gray-200);
+  color: rgba(255, 255, 255, 0.45);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+// Mobil: sidebar üstte yatay/gizli yerine içerik akışına bırakılır
+// (basit kabul edilen fallback). Off-canvas ileriki E3 işinde eklenecek.
+@media (max-width: 768px) {
+  .sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 12px $space-2;
+  }
+
+  .brand {
+    padding: 0 12px 0 0;
+  }
+
+  .nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 2px;
+
+    &__link {
+      border-left: none;
+      border-bottom: 3px solid transparent;
+      padding: 8px 10px;
+
+      &--active {
+        border-left: none;
+        border-bottom-color: $ec-primary;
+      }
+    }
+
+    &__soon {
+      display: none;
+    }
+  }
+
+  .sidebar__footer {
+    display: none;
+  }
 }

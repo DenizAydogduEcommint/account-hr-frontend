@@ -1,32 +1,86 @@
-<section class="page">
-  <header class="page__head">
-    <h2 class="page__title">Genel Bakış</h2>
-    <p class="page__subtitle">account-hr iskelet — backend bağlantı durumu</p>
+<section class="dashboard">
+  <!-- Başlık + ay seçici -->
+  <header class="dashboard__head">
+    <div>
+      <h2 class="dashboard__title">Genel Bakış</h2>
+      <p class="dashboard__subtitle">Aylık harcama ve fatura özeti</p>
+    </div>
+    <app-month-selector
+      [value]="month()"
+      (valueChange)="onMonthChange($event)"
+    />
   </header>
 
-  <div class="cards">
-    <article class="card">
-      <h3 class="card__label">Backend API</h3>
-
-      @switch (state()) {
-        @case ('loading') {
-          <p class="status status--loading">
-            <span class="status__dot"></span> Kontrol ediliyor…
-          </p>
-        }
-        @case ('up') {
-          <p class="status status--up">
-            <span class="status__dot"></span> API: UP
-          </p>
-        }
-        @case ('unreachable') {
-          <p class="status status--down">
-            <span class="status__dot"></span> API: unreachable
-          </p>
-        }
+  <!-- Yükleniyor: iskelet kartlar -->
+  @if (loading()) {
+    <div class="kpi-grid">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="kpi-card kpi-card--skeleton">
+          <div class="skeleton skeleton--line"></div>
+          <div class="skeleton skeleton--value"></div>
+        </div>
       }
+    </div>
+    <div class="chart-card chart-card--skeleton">
+      <div class="skeleton skeleton--chart"></div>
+    </div>
+  } @else if (error()) {
+    <!-- Hata durumu -->
+    <div class="state-box state-box--error">
+      <div class="state-box__icon">!</div>
+      <p class="state-box__title">Veri yüklenemedi</p>
+      <p class="state-box__text">
+        Sunucuya ulaşılamadı. Lütfen daha sonra tekrar deneyin.
+      </p>
+    </div>
+  } @else if (!hasData()) {
+    <!-- Boş durum: donut RENDER EDİLMEZ -->
+    <div class="state-box state-box--empty">
+      <div class="state-box__icon">∅</div>
+      <p class="state-box__title">Bu ay için veri bulunmuyor.</p>
+      <p class="state-box__text">Farklı bir ay seçin.</p>
+    </div>
+  } @else if (summary()) {
+    @let s = summary()!;
+    <!-- KPI kartları -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-card__label">Toplam Harcama</span>
+        <span class="kpi-card__value">
+          {{ s.totalTry | currency: 'TRY' : 'symbol' : '1.2-2' : 'tr-TR' }}
+        </span>
+      </div>
 
-      <p class="card__hint">GET /api/health</p>
-    </article>
-  </div>
+      <div class="kpi-card kpi-card--red">
+        <span class="kpi-card__label">Eksik Fatura</span>
+        <span class="kpi-card__value">{{ s.missingCount }}</span>
+      </div>
+
+      <div class="kpi-card kpi-card--green">
+        <span class="kpi-card__label">Bulunan Fatura</span>
+        <span class="kpi-card__value">{{ s.foundCount }}</span>
+      </div>
+
+      <div class="kpi-card kpi-card--orange">
+        <span class="kpi-card__label">Araştırılacak</span>
+        <span class="kpi-card__value">{{ s.investigateCount }}</span>
+      </div>
+    </div>
+
+    <!-- Donut grafik -->
+    <div class="chart-card">
+      <h3 class="chart-card__title">Fatura Durumu Dağılımı</h3>
+      <apx-chart
+        [series]="chartOptions().series"
+        [chart]="chartOptions().chart"
+        [labels]="chartOptions().labels"
+        [colors]="chartOptions().colors"
+        [legend]="chartOptions().legend"
+        [tooltip]="chartOptions().tooltip"
+        [dataLabels]="chartOptions().dataLabels"
+        [stroke]="chartOptions().stroke"
+        [responsive]="chartOptions().responsive"
+      ></apx-chart>
+    </div>
+  }
 </section>

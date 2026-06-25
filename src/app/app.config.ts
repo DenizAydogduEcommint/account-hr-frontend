@@ -1,10 +1,13 @@
 import {
   APP_INITIALIZER,
   ApplicationConfig,
+  LOCALE_ID,
   provideZoneChangeDetection,
 } from '@angular/core';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
+import { registerLocaleData } from '@angular/common';
+import localeTr from '@angular/common/locales/tr';
 import { firstValueFrom } from 'rxjs';
 
 import { routes } from './app.routes';
@@ -23,9 +26,13 @@ function restoreSessionFactory(auth: AuthService): () => Promise<void> {
       .catch(() => void 0);
 }
 
+// Türkçe yerel ayar (tr-TR): para birimi (₺), tarih, sayı biçimlendirmesi için.
+registerLocaleData(localeTr, 'tr-TR');
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
+    { provide: LOCALE_ID, useValue: 'tr-TR' },
     provideRouter(routes),
     // Sıra önemli: istekte httpError → auth (auth sona yakın, 401'i ham
     // görüp refresh/retry yapabilsin); yanıtta ters yönde işlenir.

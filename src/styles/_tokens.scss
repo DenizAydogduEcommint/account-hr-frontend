@@ -1,0 +1,101 @@
+// ============================================================
+//  E-Commint account-hr — DESIGN TOKENS (single source of truth)
+//  Tüm renkler, boşluklar, radius, gölge ve durum renkleri burada.
+//  Hem SCSS değişkenleri ($...) hem :root CSS custom property'leri
+//  tanımlanır. Bileşenler `@use 'styles/tokens' as *;` ile re-use eder.
+//  DURUM RENKLERİ backend StatusColors ile birebir aynı (tek kaynak).
+//  TypeScript aynası: src/app/shared/status-colors.ts
+// ============================================================
+
+// ---- Brand (E-Commint green-teal) --------------------------
+$ec-primary:        #00b27a; // ana yeşil-teal
+$ec-primary-dark:   #007f57;
+$ec-primary-light:  #0db284;
+$ec-primary-light2: #38ae63;
+
+// ---- Navy (sidebar) ----------------------------------------
+$ec-navy:           #010b3c;
+
+// ---- Text / surfaces ---------------------------------------
+$ec-text:           #222222;
+$ec-bg:             #ffffff;
+$ec-gray-1:         #f5f5f5;
+$ec-gray-2:         #f8f8f8;
+$ec-gray-3:         #efefef;
+$ec-border:         #e5e7eb;
+
+// ---- Invoice status colors (backend StatusColors aynası) ---
+$status-found:          #4CAF50; // Bulundu
+$status-e-invoice:      #8BC34A; // e-Fatura
+$status-expected:       #FF4444; // Bekleniyor
+$status-to-investigate: #FF9800; // Araştırılacak
+$status-ignored:        #FF9800; // Ignored
+
+// ---- Spacing (8px grid) ------------------------------------
+$space-1: 8px;
+$space-2: 16px;
+$space-3: 24px;
+$space-4: 32px;
+$space-5: 40px;
+$space-6: 48px;
+
+// ---- Radius ------------------------------------------------
+$radius-card:  12px;
+$radius-input: 8px;
+
+// ---- Shadows -----------------------------------------------
+$shadow-sm: 0 1px 2px rgba(1, 11, 60, 0.06);
+$shadow-md: 0 4px 12px rgba(1, 11, 60, 0.08);
+$shadow-lg: 0 12px 28px rgba(1, 11, 60, 0.12);
+
+// ---- Font --------------------------------------------------
+$font-sans: 'Maven Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+// ============================================================
+//  CSS custom properties (runtime tokens — global tüketim)
+// ============================================================
+:root {
+  // Brand
+  --ec-primary:        #{$ec-primary};
+  --ec-primary-dark:   #{$ec-primary-dark};
+  --ec-primary-light:  #{$ec-primary-light};
+  --ec-primary-light2: #{$ec-primary-light2};
+
+  // Navy
+  --ec-navy:           #{$ec-navy};
+
+  // Text / surfaces
+  --ec-text:           #{$ec-text};
+  --ec-bg:             #{$ec-bg};
+  --ec-gray-1:         #{$ec-gray-1};
+  --ec-gray-2:         #{$ec-gray-2};
+  --ec-gray-3:         #{$ec-gray-3};
+  --ec-border:         #{$ec-border};
+
+  // Status (single source)
+  --status-found:          #{$status-found};
+  --status-e-invoice:      #{$status-e-invoice};
+  --status-expected:       #{$status-expected};
+  --status-to-investigate: #{$status-to-investigate};
+  --status-ignored:        #{$status-ignored};
+
+  // Spacing (8px grid)
+  --space-1: #{$space-1};
+  --space-2: #{$space-2};
+  --space-3: #{$space-3};
+  --space-4: #{$space-4};
+  --space-5: #{$space-5};
+  --space-6: #{$space-6};
+
+  // Radius
+  --radius-card:  #{$radius-card};
+  --radius-input: #{$radius-input};
+
+  // Shadows
+  --shadow-sm: #{$shadow-sm};
+  --shadow-md: #{$shadow-md};
+  --shadow-lg: #{$shadow-lg};
+
+  // Font
+  --font-sans: #{$font-sans};
+}
