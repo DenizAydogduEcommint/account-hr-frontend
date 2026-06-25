@@ -20,6 +20,12 @@
     gap: 16px;
   }
 
+  &__user {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-700);
+  }
+
   &__avatar {
     display: grid;
     place-items: center;
@@ -30,5 +36,26 @@
     color: #fff;
     font-size: 13px;
     font-weight: 500;
+  }
+
+  &__logout {
+    height: 34px;
+    padding: 0 14px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--gray-700);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+      border-color 0.15s ease,
+      color 0.15s ease;
+
+    &:hover {
+      border-color: var(--gray-300);
+      color: var(--gray-900);
+    }
   }
 }
