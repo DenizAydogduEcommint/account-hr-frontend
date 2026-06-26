@@ -126,7 +126,7 @@
       [serviceId]="target.serviceId"
       [serviceName]="target.serviceName"
       [month]="month()"
-      (uploaded)="onUploaded(target.serviceName)"
+      (uploaded)="onUploaded($event)"
       (closed)="closeUpload()"
     />
   }

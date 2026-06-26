@@ -68,6 +68,7 @@ export class ServicesComponent implements OnInit, OnDestroy {
   private searchSub?: Subscription;
   private listSub?: Subscription;
   private saveSub?: Subscription;
+  private toggleSub?: Subscription;
   private cardsSub?: Subscription;
 
   // ---- Referans veri -----------------------------------------------------
@@ -286,8 +287,10 @@ export class ServicesComponent implements OnInit, OnDestroy {
   // ---- Pasifleştir / aktifleştir ----------------------------------------
   toggleActive(row: ServiceResponse): void {
     const next: ActiveState = row.activeState === 'YES' ? 'NO' : 'YES';
-    this.saveSub?.unsubscribe();
-    this.saveSub = this.service.setActive(row.id, next).subscribe({
+    // Ayrı `toggleSub` kullan → eşzamanlı bir düzenleme-kaydetme (saveSub) ile
+    // aktifleştir/pasifleştir birbirini iptal etmesin.
+    this.toggleSub?.unsubscribe();
+    this.toggleSub = this.service.setActive(row.id, next).subscribe({
       next: () => this.fetch(),
       error: () => this.fetch(),
     });
@@ -321,6 +324,7 @@ export class ServicesComponent implements OnInit, OnDestroy {
     this.searchSub?.unsubscribe();
     this.listSub?.unsubscribe();
     this.saveSub?.unsubscribe();
+    this.toggleSub?.unsubscribe();
     this.cardsSub?.unsubscribe();
   }
 }

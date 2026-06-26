@@ -166,6 +166,27 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   /** Aktif object URL (revoke için ham string olarak saklanır). */
   private previewObjectUrl: string | null = null;
 
+  /**
+   * Önizleme "kuşağı" sayacı. Her preview() çağrısı ve her kapanış
+   * (closePreview/resetFiles) bunu artırır. Asenkron iş (blob.text() Promise
+   * veya blob subscription) tamamlandığında yakalanan `gen` güncel sayaçla
+   * eşleşmiyorsa hiçbir sinyal yazılmaz → kapanmış/değişmiş önizlemeye
+   * bayat içerik / hayalet loading yazılmasını önler.
+   */
+  private previewGeneration = 0;
+
+  // ---- İndirme durumu (E3-09) --------------------------------------------
+  /**
+   * İndirme hatası mesajı — önizleme hatasından TAMAMEN ayrı tutulur ki
+   * bir dosyanın indirme hatası, başka bir dosyanın açık önizlemesini
+   * kirletmesin.
+   */
+  readonly downloadError = signal<string | null>(null);
+  /** Hangi dosyanın indirmesinin hata verdiği (satır-içi mesaj için). */
+  readonly downloadErrorFileId = signal<number | null>(null);
+  /** Şu an indirilen dosyanın id'si (null → indirme yok). Butonu kilitler. */
+  readonly downloadingFileId = signal<number | null>(null);
+
   // Render kararı backend `fileType` enum'ına (PDF|XML|STATEMENT|RECEIPT|OTHER)
   // DEĞİL, `mimeType`'a göre verilir: fotoğraflanmış faturalar RECEIPT/OTHER
   // olarak gelir ama mimeType=image/* taşır. fileType'a bakmak görsel
@@ -331,6 +352,11 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   private resetFiles(): void {
     this.filesSub?.unsubscribe();
     this.closePreview();
+    // İndirmeyi de iptal et + indirme hata/durum sinyallerini temizle.
+    this.downloadSub?.unsubscribe();
+    this.downloadingFileId.set(null);
+    this.downloadError.set(null);
+    this.downloadErrorFileId.set(null);
     this.files.set([]);
     this.filesLoading.set(false);
     this.filesError.set(false);
@@ -347,6 +373,9 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   /** Bir dosyayı önizle: blob'u (auth taşıyan XHR ile) çek, türüne göre göster. */
   preview(file: FileMeta): void {
     this.previewSub?.unsubscribe();
+    // Yeni bir önizleme kuşağı başlat → in-flight (önceki) asenkron işler
+    // tamamlandığında sinyal yazamaz (gen uyuşmaz).
+    const gen = ++this.previewGeneration;
     // Önceki object URL'i mutlaka revoke et (yeni oluşturmadan önce).
     this.revokePreviewUrl();
     this.previewSafeUrl.set(null);
@@ -362,13 +391,24 @@ export class ExpensesComponent implements OnInit, OnDestroy {
           blob
             .text()
             .then((txt) => {
+              // Önizleme kapandı/değişti ise yazma (bayat yazımı önle).
+              if (gen !== this.previewGeneration) {
+                return;
+              }
               this.previewText.set(txt);
               this.previewLoading.set(false);
             })
             .catch(() => {
+              if (gen !== this.previewGeneration) {
+                return;
+              }
               this.previewError.set('Dosya içeriği okunamadı.');
               this.previewLoading.set(false);
             });
+          return;
+        }
+        // Önizleme kapandı/değişti ise object URL bile oluşturma.
+        if (gen !== this.previewGeneration) {
           return;
         }
         // PDF (iframe) / JPG-PNG (img) → blob: URL + sanitizer.
@@ -380,6 +420,9 @@ export class ExpensesComponent implements OnInit, OnDestroy {
         this.previewLoading.set(false);
       },
       error: (err: { status?: number }) => {
+        if (gen !== this.previewGeneration) {
+          return;
+        }
         this.previewLoading.set(false);
         if (err?.status === 404) {
           this.previewError.set('Dosya bulunamadı veya silinmiş.');
@@ -395,6 +438,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   /** Önizlemeyi kapat: aktif object URL'i revoke et, durumu sıfırla. */
   closePreview(): void {
     this.previewSub?.unsubscribe();
+    // Kuşağı ilerlet → in-flight asenkron işler artık sinyal yazamaz.
+    this.previewGeneration++;
     this.revokePreviewUrl();
     this.previewFile.set(null);
     this.previewSafeUrl.set(null);
@@ -405,7 +450,19 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 
   /** Dosyayı indir: blob'u çek → gerçek dosya adıyla tarayıcı kaydı tetikle. */
   download(file: FileMeta): void {
+    // Aynı anda zaten bir indirme sürüyorsa yeni tıklamayı yok say
+    // (eşzamanlı indirmelerin birbirini sessizce iptal etmesini önle).
+    if (this.downloadingFileId() != null) {
+      return;
+    }
     this.downloadSub?.unsubscribe();
+    // Bu dosya için önceki indirme hatasını temizle.
+    if (this.downloadErrorFileId() === file.id) {
+      this.downloadError.set(null);
+      this.downloadErrorFileId.set(null);
+    }
+    this.downloadingFileId.set(file.id);
+
     this.downloadSub = this.service.downloadBlob(file.id).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
@@ -416,20 +473,20 @@ export class ExpensesComponent implements OnInit, OnDestroy {
         a.click();
         a.remove();
         URL.revokeObjectURL(url);
+        this.downloadingFileId.set(null);
       },
       error: (err: { status?: number }) => {
+        // İndirme hatası önizleme sinyallerine DOKUNMAZ → açık başka bir
+        // dosyanın önizlemesi kirletilmez. Ayrı downloadError sinyali kullanılır.
         if (err?.status === 404) {
-          this.previewError.set('Dosya bulunamadı veya silinmiş.');
+          this.downloadError.set('Dosya bulunamadı veya silinmiş.');
         } else if (err?.status === 403) {
-          this.previewError.set('Bu dosyayı indirme yetkiniz yok.');
+          this.downloadError.set('Bu dosyayı indirme yetkiniz yok.');
         } else {
-          this.previewError.set('Dosya indirilemedi. Lütfen tekrar deneyin.');
+          this.downloadError.set('Dosya indirilemedi. Lütfen tekrar deneyin.');
         }
-        // İndirme hatasını ilgili dosyanın önizleme alanında göstermek için
-        // o dosyayı seçili yap (önizleme açık değilse de mesaj görünür olsun).
-        if (this.previewFile() == null) {
-          this.previewFile.set(file);
-        }
+        this.downloadErrorFileId.set(file.id);
+        this.downloadingFileId.set(null);
       },
     });
   }
@@ -562,6 +619,11 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   /** Satır oluşturuldu → modalı kapat, ilk sayfaya dön, listeyi+toplamı yenile. */
   onCreated(): void {
     this.createOpen.set(false);
+    // Açık olabilecek detayı kapat (savunmacı sertleştirme): ileride UI
+    // değişse bile oluşturma sonrası bayat detay gösterilmesin.
+    this.selectedRow.set(null);
+    this.pendingStatus.set(null);
+    this.resetFiles();
     this.page.set(0);
     this.fetch();
   }

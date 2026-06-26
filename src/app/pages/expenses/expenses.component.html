@@ -392,11 +392,17 @@
                     <button
                       type="button"
                       class="btn btn--ghost btn--sm"
+                      [disabled]="downloadingFileId() != null"
                       (click)="download(file)"
                     >
-                      İndir
+                      {{ downloadingFileId() === file.id ? 'İndiriliyor…' : 'İndir' }}
                     </button>
                   </div>
+                  @if (downloadErrorFileId() === file.id && downloadError()) {
+                    <div class="file-item__error" role="alert">
+                      {{ downloadError() }}
+                    </div>
+                  }
                 </li>
               }
             </ul>
@@ -453,13 +459,19 @@
         }
       </div>
 
+      @if (downloadErrorFileId() === file.id && downloadError()) {
+        <div class="preview-download-error" role="alert">
+          {{ downloadError() }}
+        </div>
+      }
       <footer class="modal__foot">
         <button
           type="button"
           class="btn btn--ghost"
+          [disabled]="downloadingFileId() != null"
           (click)="download(file)"
         >
-          İndir
+          {{ downloadingFileId() === file.id ? 'İndiriliyor…' : 'İndir' }}
         </button>
         <button type="button" class="btn btn--ghost" (click)="closePreview()">
           Kapat

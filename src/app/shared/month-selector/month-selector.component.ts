@@ -108,15 +108,32 @@ export class MonthSelectorComponent {
   /** Seçim değiştiğinde yeni "YYYY-MM" değerini yayınlar. */
   @Output() valueChange = new EventEmitter<string>();
 
-  /** Üretilen seçenek listesi (statik 2026-01 .. 2026-12). */
-  private readonly year = signal(2026);
+  /**
+   * Seçenek listesinin yılı — geçerli yıldan başlar (2026'ya sabit DEĞİL),
+   * böylece 2027+ için liste otomatik kayar.
+   */
+  private readonly year = signal(new Date().getFullYear());
 
+  /**
+   * Seçili `value` ("YYYY-MM") farklı bir yıldaysa, o yılı da listeye dahil et
+   * ki seçili ay her zaman render olup seçili görünsün. Tek yıl ise sadece o
+   * yıl gösterilir; iki farklı yıl ise her ikisinin 12 ayı da listelenir.
+   */
   readonly options = computed<MonthOption[]>(() => {
-    const y = this.year();
-    return TR_MONTHS.map((name, i) => {
-      const mm = String(i + 1).padStart(2, '0');
-      return { value: `${y}-${mm}`, label: `${name} ${y}` };
-    });
+    const baseYear = this.year();
+    const years = new Set<number>([baseYear]);
+    const selectedYear = Number(this.value?.split('-')[0]);
+    if (!Number.isNaN(selectedYear)) {
+      years.add(selectedYear);
+    }
+    return [...years]
+      .sort((a, b) => a - b)
+      .flatMap((y) =>
+        TR_MONTHS.map((name, i) => {
+          const mm = String(i + 1).padStart(2, '0');
+          return { value: `${y}-${mm}`, label: `${name} ${y}` };
+        }),
+      );
   });
 
   onChange(event: Event): void {
