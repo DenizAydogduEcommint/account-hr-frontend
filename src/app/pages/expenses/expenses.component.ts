@@ -6,6 +6,10 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import {
+  DomSanitizer,
+  SafeResourceUrl,
+} from '@angular/platform-browser';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -24,6 +28,7 @@ import {
   CardRef,
   ExpenseListResponse,
   ExpenseRow,
+  FileMeta,
   STATUS_FILTER_OPTIONS,
 } from './expenses.models';
 import { ExpensesService } from './expenses.service';
@@ -57,6 +62,7 @@ const PAGE_SIZE = 50;
 export class ExpensesComponent implements OnInit, OnDestroy {
   private readonly service = inject(ExpensesService);
   private readonly auth = inject(AuthService);
+  private readonly sanitizer = inject(DomSanitizer);
 
   /**
    * Durum değiştirme (PATCH status, E3-07) yetkisi var mı? (E3-08)
@@ -85,6 +91,9 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   private listSub?: Subscription;
   private cardsSub?: Subscription;
   private statusSub?: Subscription;
+  private filesSub?: Subscription;
+  private previewSub?: Subscription;
+  private downloadSub?: Subscription;
 
   // ---- Referans veri -----------------------------------------------------
   readonly cards = signal<CardRef[]>([]);
@@ -134,6 +143,46 @@ export class ExpensesComponent implements OnInit, OnDestroy {
     const row = this.selectedRow();
     const pending = this.pendingStatus();
     return row != null && pending != null && pending !== row.invoiceStatus;
+  });
+
+  // ---- Fatura dosyaları (E3-09) ------------------------------------------
+  /** Açık satıra ekli dosyaların metadata listesi. */
+  readonly files = signal<FileMeta[]>([]);
+  /** Dosya listesi yükleniyor mu. */
+  readonly filesLoading = signal(false);
+  /** Dosya listesi yüklenemedi (ağ/sunucu hatası). */
+  readonly filesError = signal(false);
+
+  /** Şu an önizlenen dosya (null → önizleme kapalı). */
+  readonly previewFile = signal<FileMeta | null>(null);
+  /** Önizleme içeriği yükleniyor mu. */
+  readonly previewLoading = signal(false);
+  /** Önizleme hata mesajı (404 → "bulunamadı", 403 → yetki, diğer → genel). */
+  readonly previewError = signal<string | null>(null);
+  /** PDF/görsel için güvenli blob: URL (sanitizer'dan geçirilmiş). */
+  readonly previewSafeUrl = signal<SafeResourceUrl | null>(null);
+  /** XML ham metin içeriği. */
+  readonly previewText = signal<string | null>(null);
+  /** Aktif object URL (revoke için ham string olarak saklanır). */
+  private previewObjectUrl: string | null = null;
+
+  // Render kararı backend `fileType` enum'ına (PDF|XML|STATEMENT|RECEIPT|OTHER)
+  // DEĞİL, `mimeType`'a göre verilir: fotoğraflanmış faturalar RECEIPT/OTHER
+  // olarak gelir ama mimeType=image/* taşır. fileType'a bakmak görsel
+  // faturalarda boş önizlemeye yol açardı.
+  /** Önizlenen dosyanın türü görsel mi (img ile gösterilir). */
+  readonly previewIsImage = computed(() => {
+    const m = this.previewFile()?.mimeType ?? '';
+    return m.startsWith('image/');
+  });
+  /** Önizlenen dosya PDF mi (iframe ile gösterilir). */
+  readonly previewIsPdf = computed(
+    () => this.previewFile()?.mimeType === 'application/pdf',
+  );
+  /** Önizlenen dosya XML mi (pre ile ham metin gösterilir). */
+  readonly previewIsXml = computed(() => {
+    const m = this.previewFile()?.mimeType ?? '';
+    return m.includes('xml');
   });
 
   // ---- Yeni satır ekle modalı (E3-06) ------------------------------------
@@ -244,6 +293,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
     this.pendingStatus.set(row.invoiceStatus);
     this.statusError.set(null);
     this.statusSaving.set(false);
+    this.loadFiles(row.id);
   }
 
   closeDetail(): void {
@@ -253,6 +303,187 @@ export class ExpensesComponent implements OnInit, OnDestroy {
     this.selectedRow.set(null);
     this.pendingStatus.set(null);
     this.statusError.set(null);
+    this.resetFiles();
+  }
+
+  // ---- Fatura dosyaları (E3-09) ------------------------------------------
+
+  /** Açık satıra ait dosya listesini çeker. */
+  private loadFiles(expenseId: number): void {
+    this.filesSub?.unsubscribe();
+    this.files.set([]);
+    this.filesError.set(false);
+    this.filesLoading.set(true);
+
+    this.filesSub = this.service.expenseFiles(expenseId).subscribe({
+      next: (list) => {
+        this.files.set(list);
+        this.filesLoading.set(false);
+      },
+      error: () => {
+        this.filesError.set(true);
+        this.filesLoading.set(false);
+      },
+    });
+  }
+
+  /** Dosya listesi + canlı önizlemeyi temizler (modal kapanışı / yeniden açılış). */
+  private resetFiles(): void {
+    this.filesSub?.unsubscribe();
+    this.closePreview();
+    this.files.set([]);
+    this.filesLoading.set(false);
+    this.filesError.set(false);
+  }
+
+  /** Aktif object URL'i (varsa) serbest bırakır — bellek sızıntısını önler. */
+  private revokePreviewUrl(): void {
+    if (this.previewObjectUrl) {
+      URL.revokeObjectURL(this.previewObjectUrl);
+      this.previewObjectUrl = null;
+    }
+  }
+
+  /** Bir dosyayı önizle: blob'u (auth taşıyan XHR ile) çek, türüne göre göster. */
+  preview(file: FileMeta): void {
+    this.previewSub?.unsubscribe();
+    // Önceki object URL'i mutlaka revoke et (yeni oluşturmadan önce).
+    this.revokePreviewUrl();
+    this.previewSafeUrl.set(null);
+    this.previewText.set(null);
+    this.previewError.set(null);
+    this.previewFile.set(file);
+    this.previewLoading.set(true);
+
+    this.previewSub = this.service.previewBlob(file.id).subscribe({
+      next: (blob) => {
+        if (file.mimeType.includes('xml')) {
+          // XML → ham metin olarak <pre> içinde göster.
+          blob
+            .text()
+            .then((txt) => {
+              this.previewText.set(txt);
+              this.previewLoading.set(false);
+            })
+            .catch(() => {
+              this.previewError.set('Dosya içeriği okunamadı.');
+              this.previewLoading.set(false);
+            });
+          return;
+        }
+        // PDF (iframe) / JPG-PNG (img) → blob: URL + sanitizer.
+        const url = URL.createObjectURL(blob);
+        this.previewObjectUrl = url;
+        this.previewSafeUrl.set(
+          this.sanitizer.bypassSecurityTrustResourceUrl(url),
+        );
+        this.previewLoading.set(false);
+      },
+      error: (err: { status?: number }) => {
+        this.previewLoading.set(false);
+        if (err?.status === 404) {
+          this.previewError.set('Dosya bulunamadı veya silinmiş.');
+        } else if (err?.status === 403) {
+          this.previewError.set('Bu dosyayı görüntüleme yetkiniz yok.');
+        } else {
+          this.previewError.set('Önizleme yüklenemedi. Lütfen tekrar deneyin.');
+        }
+      },
+    });
+  }
+
+  /** Önizlemeyi kapat: aktif object URL'i revoke et, durumu sıfırla. */
+  closePreview(): void {
+    this.previewSub?.unsubscribe();
+    this.revokePreviewUrl();
+    this.previewFile.set(null);
+    this.previewSafeUrl.set(null);
+    this.previewText.set(null);
+    this.previewError.set(null);
+    this.previewLoading.set(false);
+  }
+
+  /** Dosyayı indir: blob'u çek → gerçek dosya adıyla tarayıcı kaydı tetikle. */
+  download(file: FileMeta): void {
+    this.downloadSub?.unsubscribe();
+    this.downloadSub = this.service.downloadBlob(file.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      },
+      error: (err: { status?: number }) => {
+        if (err?.status === 404) {
+          this.previewError.set('Dosya bulunamadı veya silinmiş.');
+        } else if (err?.status === 403) {
+          this.previewError.set('Bu dosyayı indirme yetkiniz yok.');
+        } else {
+          this.previewError.set('Dosya indirilemedi. Lütfen tekrar deneyin.');
+        }
+        // İndirme hatasını ilgili dosyanın önizleme alanında göstermek için
+        // o dosyayı seçili yap (önizleme açık değilse de mesaj görünür olsun).
+        if (this.previewFile() == null) {
+          this.previewFile.set(file);
+        }
+      },
+    });
+  }
+
+  /** Bayt → okunabilir boyut (KB/MB). */
+  formatSize(bytes: number): string {
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    }
+    const kb = bytes / 1024;
+    if (kb < 1024) {
+      return `${kb.toLocaleString('tr-TR', { maximumFractionDigits: 1 })} KB`;
+    }
+    const mb = kb / 1024;
+    return `${mb.toLocaleString('tr-TR', { maximumFractionDigits: 1 })} MB`;
+  }
+
+  /**
+   * Dosya rozeti: önce `mimeType`'tan anlamlı bir etiket türet
+   * (PDF/IMG/XML), aksi halde backend `fileType` enum'ını göster.
+   * STATEMENT/RECEIPT/OTHER gibi türler image taşıyorsa "IMG" gösterilir,
+   * böylece rozet boş/anlamsız kalmaz. Dönüş `data-type` renklendirmesiyle
+   * uyumludur (PDF/XML/IMG).
+   */
+  fileBadge(file: FileMeta): string {
+    const m = file.mimeType ?? '';
+    if (m === 'application/pdf') {
+      return 'PDF';
+    }
+    if (m.includes('xml')) {
+      return 'XML';
+    }
+    if (m.startsWith('image/')) {
+      return 'IMG';
+    }
+    return file.fileType || 'DOSYA';
+  }
+
+  /** ISO datetime → "DD.MM.YYYY HH:mm" (tr-TR), null/boş → "—". */
+  formatUploadedAt(iso: string | null): string {
+    if (!iso) {
+      return '—';
+    }
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) {
+      return iso;
+    }
+    return d.toLocaleString('tr-TR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 
   // ---- Durum değiştir (E3-07) --------------------------------------------
@@ -371,5 +602,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
     this.listSub?.unsubscribe();
     this.cardsSub?.unsubscribe();
     this.statusSub?.unsubscribe();
+    this.filesSub?.unsubscribe();
+    this.previewSub?.unsubscribe();
+    this.downloadSub?.unsubscribe();
+    // Canlı object URL'i serbest bırak (bellek sızıntısını önle).
+    this.revokePreviewUrl();
   }
 }

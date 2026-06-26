@@ -68,6 +68,33 @@ export interface CardRef {
   label: string | null;
 }
 
+/**
+ * Backend `FileType` enum'ı (E3-09).
+ * Java tarafı yalnızca bu değerleri üretir — JPG/PNG gibi MIME türleri
+ * `mimeType` alanında taşınır, burada DEĞİL. Görsel faturalar `RECEIPT`/`OTHER`
+ * olarak gelir; önizleme kararı `mimeType` üzerinden verilmelidir.
+ */
+export type FileType = 'PDF' | 'XML' | 'STATEMENT' | 'RECEIPT' | 'OTHER';
+
+/**
+ * Tek fatura dosyası metadata'sı.
+ * GET /api/v1/expenses/{expenseId}/files yanıtının elemanı.
+ * Fiziksel yol ASLA dışa verilmez — dosya yalnızca {@code id} ile çekilir.
+ */
+export interface FileMeta {
+  id: number;
+  fileName: string;
+  fileType: FileType;
+  mimeType: string;
+  sizeBytes: number;
+  /** ISO datetime. */
+  uploadedAt: string;
+  invoiceId: number;
+  invoiceStatus: string;
+  /** Sunucu içinde önizlenebilir mi (PDF/JPG/PNG/XML). */
+  previewable: boolean;
+}
+
 /** Durum filtresi seçenekleri (sabit sıra). */
 export const STATUS_FILTER_OPTIONS: InvoiceStatus[] = [
   'FOUND',

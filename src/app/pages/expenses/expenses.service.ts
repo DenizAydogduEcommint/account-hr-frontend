@@ -5,7 +5,12 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ExpenseCreateRequest } from '../../shared/expense-create/expense-create.models';
 import { InvoiceStatus } from '../../shared/status-colors';
-import { CardRef, ExpenseListResponse, ExpenseRow } from './expenses.models';
+import {
+  CardRef,
+  ExpenseListResponse,
+  ExpenseRow,
+  FileMeta,
+} from './expenses.models';
 
 /** Harcama listesi sorgu parametreleri. */
 export interface ExpenseQuery {
@@ -81,5 +86,37 @@ export class ExpensesService {
       `${this.baseUrl}/expenses/${id}/status`,
       { status },
     );
+  }
+
+  // ---- Fatura dosyaları (E3-09) ------------------------------------------
+
+  /**
+   * Bir harcama satırına ekli fatura dosyalarının metadata listesini getirir.
+   * Fiziksel yol dönmez; dosyalar yalnızca {@code id} ile çekilir.
+   */
+  expenseFiles(expenseId: number): Observable<FileMeta[]> {
+    return this.http.get<FileMeta[]>(
+      `${this.baseUrl}/expenses/${expenseId}/files`,
+    );
+  }
+
+  /**
+   * Dosyayı önizleme için Blob olarak çeker (Content-Disposition: inline).
+   * {@code responseType:'blob'} olduğundan istek XHR ile gider ve auth
+   * interceptor Bearer başlığını ekler — bu yüzden URL'i doğrudan bir
+   * {@code <iframe src>}/{@code <img src>} içine koymak YETMEZ (o istek JWT
+   * taşımaz). Blob alınıp {@code URL.createObjectURL} ile gösterilir.
+   */
+  previewBlob(fileId: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/files/${fileId}/preview`, {
+      responseType: 'blob',
+    });
+  }
+
+  /** Dosyayı indirme (attachment) için Blob olarak çeker. */
+  downloadBlob(fileId: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/files/${fileId}/download`, {
+      responseType: 'blob',
+    });
   }
 }

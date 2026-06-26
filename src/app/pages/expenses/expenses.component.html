@@ -345,10 +345,123 @@
             <dd>{{ row.invoiceNote || '—' }}</dd>
           </div>
         </dl>
+
+        <!-- Faturalar (E3-09): satıra ekli dosyalar — önizle / indir -->
+        <section class="files">
+          <h4 class="files__title">Faturalar</h4>
+
+          @if (filesLoading()) {
+            <div class="files__state">Dosyalar yükleniyor…</div>
+          } @else if (filesError()) {
+            <div class="files__state files__state--error">
+              Dosyalar yüklenemedi. Lütfen tekrar deneyin.
+            </div>
+          } @else if (files().length === 0) {
+            <div class="files__state">
+              Bu satıra ekli fatura dosyası bulunmuyor.
+            </div>
+          } @else {
+            <ul class="files__list">
+              @for (file of files(); track file.id) {
+                <li class="file-item">
+                  <span
+                    class="file-item__badge"
+                    [attr.data-type]="fileBadge(file)"
+                  >
+                    {{ fileBadge(file) }}
+                  </span>
+                  <div class="file-item__meta">
+                    <span class="file-item__name" [title]="file.fileName">
+                      {{ file.fileName }}
+                    </span>
+                    <span class="file-item__sub">
+                      {{ formatSize(file.sizeBytes) }} ·
+                      {{ formatUploadedAt(file.uploadedAt) }}
+                    </span>
+                  </div>
+                  <div class="file-item__actions">
+                    @if (file.previewable) {
+                      <button
+                        type="button"
+                        class="btn btn--ghost btn--sm"
+                        (click)="preview(file)"
+                      >
+                        Önizle
+                      </button>
+                    }
+                    <button
+                      type="button"
+                      class="btn btn--ghost btn--sm"
+                      (click)="download(file)"
+                    >
+                      İndir
+                    </button>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </section>
       </div>
 
       <footer class="modal__foot">
         <button type="button" class="btn btn--ghost" (click)="closeDetail()">
+          Kapat
+        </button>
+      </footer>
+    </div>
+  </div>
+}
+
+<!-- Fatura önizleme modalı (E3-09) — blob: URL + sanitizer, auth taşıyan XHR -->
+@if (previewFile(); as file) {
+  <div class="modal-overlay" (click)="closePreview()">
+    <div
+      class="modal modal--preview"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal__head">
+        <h3 class="modal__title" [title]="file.fileName">
+          {{ file.fileName }}
+        </h3>
+        <button type="button" class="modal__close" (click)="closePreview()">
+          ×
+        </button>
+      </header>
+
+      <div class="modal__body preview-body">
+        @if (previewLoading()) {
+          <div class="preview-state">Önizleme yükleniyor…</div>
+        } @else if (previewError()) {
+          <div class="preview-state preview-state--error">
+            {{ previewError() }}
+          </div>
+        } @else if (previewIsPdf() && previewSafeUrl()) {
+          <iframe
+            class="preview-frame"
+            [src]="previewSafeUrl()"
+            title="PDF önizleme"
+          ></iframe>
+        } @else if (previewIsImage() && previewSafeUrl()) {
+          <img
+            class="preview-image"
+            [src]="previewSafeUrl()"
+            [alt]="file.fileName"
+          />
+        } @else if (previewIsXml() && previewText() !== null) {
+          <pre class="preview-xml">{{ previewText() }}</pre>
+        }
+      </div>
+
+      <footer class="modal__foot">
+        <button
+          type="button"
+          class="btn btn--ghost"
+          (click)="download(file)"
+        >
+          İndir
+        </button>
+        <button type="button" class="btn btn--ghost" (click)="closePreview()">
           Kapat
         </button>
       </footer>
