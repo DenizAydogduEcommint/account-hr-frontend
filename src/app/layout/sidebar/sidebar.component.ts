@@ -26,7 +26,7 @@ export class SidebarComponent {
   readonly nav: NavItem[] = [
     { label: 'Dashboard', icon: '▣', path: '/dashboard' },
     { label: 'Servisler', icon: '◆', path: '/services' },
-    { label: 'Harcamalar', icon: '₺' },
+    { label: 'Harcamalar', icon: '₺', path: '/expenses' },
     { label: 'Eksik Fatura', icon: '!' },
     { label: 'Faturalar', icon: '▤' },
   ];

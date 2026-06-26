@@ -7,6 +7,8 @@ import {
   signal,
 } from '@angular/core';
 
+import { DEFAULT_MONTH } from '../default-month';
+
 /** Bir ay seçeneği: değer "YYYY-MM", etiket "Ocak 2026" gibi. */
 export interface MonthOption {
   value: string;
@@ -34,7 +36,7 @@ const TR_MONTHS = [
  * - Periyot endpoint'i olmadığından statik liste: 2026-01 .. 2026-12,
  *   Türkçe etiketlerle ("Ocak 2026" .. "Aralık 2026").
  * - Sözleşme: @Input() value ("YYYY-MM") + @Output() valueChange.
- * - Varsayılan seçim: geçerli ay "2026-06".
+ * - Varsayılan seçim: paylaşılan DEFAULT_MONTH (single source of truth).
  */
 @Component({
   selector: 'app-month-selector',
@@ -45,12 +47,11 @@ const TR_MONTHS = [
       <span class="month-selector__label">Ay</span>
       <select
         class="month-selector__select"
-        [value]="value"
         (change)="onChange($event)"
         aria-label="Ay seçimi"
       >
         @for (opt of options(); track opt.value) {
-          <option [value]="opt.value">{{ opt.label }}</option>
+          <option [value]="opt.value" [selected]="opt.value === value">{{ opt.label }}</option>
         }
       </select>
     </label>
@@ -101,8 +102,8 @@ const TR_MONTHS = [
   ],
 })
 export class MonthSelectorComponent {
-  /** Seçili ay ("YYYY-MM"). Varsayılan: geçerli ay. */
-  @Input() value = '2026-06';
+  /** Seçili ay ("YYYY-MM"). Varsayılan: paylaşılan DEFAULT_MONTH. */
+  @Input() value = DEFAULT_MONTH;
 
   /** Seçim değiştiğinde yeni "YYYY-MM" değerini yayınlar. */
   @Output() valueChange = new EventEmitter<string>();

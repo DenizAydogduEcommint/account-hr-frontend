@@ -1,0 +1,314 @@
+<section class="expenses">
+  <!-- Başlık -->
+  <header class="expenses__head">
+    <div>
+      <h2 class="expenses__title">Harcamalar</h2>
+      <p class="expenses__subtitle">
+        Seçili ayın tüm harcama satırları — Excel ay sheet'inin web karşılığı
+      </p>
+    </div>
+  </header>
+
+  <!-- Filtre + arama çubuğu -->
+  <div class="toolbar">
+    <div class="field">
+      <app-month-selector
+        [value]="month()"
+        (valueChange)="onMonthChange($event)"
+      />
+    </div>
+
+    <label class="field">
+      <span class="field__label">Kart</span>
+      <select class="field__select" (change)="onCardChange($event)">
+        <option value="">Tümü</option>
+        @for (card of cards(); track card.id) {
+          <option [value]="card.last4">{{ cardOptionLabel(card) }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="field">
+      <span class="field__label">Fatura Durumu</span>
+      <select class="field__select" (change)="onStatusChange($event)">
+        <option value="">Tümü</option>
+        @for (opt of statusOptions; track opt) {
+          <option [value]="opt">{{ statusLabels[opt] }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="field field--grow">
+      <span class="field__label">Ara</span>
+      <input
+        type="text"
+        class="field__input"
+        placeholder="Hizmet veya sağlayıcı adı…"
+        (input)="onSearchInput($event)"
+      />
+    </label>
+  </div>
+
+  <!-- Yükleniyor -->
+  @if (loading()) {
+    <div class="table-card">
+      <div class="skeleton skeleton--row"></div>
+      <div class="skeleton skeleton--row"></div>
+      <div class="skeleton skeleton--row"></div>
+      <div class="skeleton skeleton--row"></div>
+    </div>
+  } @else if (error()) {
+    <div class="state-box state-box--error">
+      <div class="state-box__icon">!</div>
+      <p class="state-box__title">Veri yüklenemedi</p>
+      <p class="state-box__text">
+        Sunucuya ulaşılamadı. Lütfen daha sonra tekrar deneyin.
+      </p>
+    </div>
+  } @else if (mainRows().length === 0) {
+    <div class="state-box state-box--empty">
+      <div class="state-box__icon">∅</div>
+      <p class="state-box__title">Bu ay için harcama bulunmuyor.</p>
+      <p class="state-box__text">
+        Farklı bir ay seçin veya filtreleri değiştirin.
+      </p>
+    </div>
+  } @else {
+    <!-- 12 kolonlu tablo (yatay kaydırılabilir) -->
+    <div class="table-card">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Tarih</th>
+            <th>Hizmet</th>
+            <th>Sağlayıcı</th>
+            <th class="table__num">Tutar</th>
+            <th>Para Birimi</th>
+            <th class="table__num">TL Karşılığı</th>
+            <th>Kart</th>
+            <th>Kullanan Takım</th>
+            <th>Amaç</th>
+            <th>Muhasebe E-posta</th>
+            <th>Fatura Durumu</th>
+            <th>Fatura Notu</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of mainRows(); track row.id) {
+            <tr class="table__row" (click)="openDetail(row)">
+              <td>{{ formatDate(row.transactionDate) }}</td>
+              <td class="table__strong">{{ row.serviceName || '—' }}</td>
+              <td>{{ row.providerName || '—' }}</td>
+              <td class="table__num">{{ formatNumber(row.amount) }}</td>
+              <td>{{ row.currency || '—' }}</td>
+              <td class="table__num">{{ formatNumber(row.amountTry, true) }}</td>
+              <td>{{ row.cardLast4 ? '****' + row.cardLast4 : '—' }}</td>
+              <td>{{ row.usingTeam || '—' }}</td>
+              <td class="table__notes" [title]="row.purpose || ''">
+                {{ row.purpose || '—' }}
+              </td>
+              <td class="table__email" [title]="row.accountingEmail || ''">
+                {{ row.accountingEmail || '—' }}
+              </td>
+              <td>
+                <app-status-badge [status]="row.invoiceStatus" />
+              </td>
+              <td class="table__notes" [title]="row.invoiceNote || ''">
+                {{ row.invoiceNote || '—' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Operasyonel toplam + sayfalama -->
+    <div class="summary-bar">
+      <div class="summary-bar__total">
+        <span class="summary-bar__label">Operasyonel Toplam</span>
+        <span class="summary-bar__value">
+          {{ formatNumber(operationalTotalTry(), true) }}
+        </span>
+      </div>
+
+      @if (totalPages() > 1) {
+        <div class="pager">
+          <button
+            type="button"
+            class="btn btn--ghost btn--sm"
+            [disabled]="page() === 0"
+            (click)="prevPage()"
+          >
+            ‹ Önceki
+          </button>
+          <span class="pager__info">
+            Sayfa {{ page() + 1 }} / {{ totalPages() }}
+            ({{ totalElements() }} satır)
+          </span>
+          <button
+            type="button"
+            class="btn btn--ghost btn--sm"
+            [disabled]="page() >= totalPages() - 1"
+            (click)="nextPage()"
+          >
+            Sonraki ›
+          </button>
+        </div>
+      }
+    </div>
+
+    <!-- Bilgi amaçlı satırlar (Multinet / sigorta / vergi) — AYRI bölüm -->
+    @if (informationalRows().length > 0) {
+      <div class="info-section">
+        <button
+          type="button"
+          class="info-section__head"
+          (click)="toggleInfo()"
+        >
+          <span class="info-section__chevron">
+            {{ infoOpen() ? '▾' : '▸' }}
+          </span>
+          <span class="info-section__title">
+            Bilgi Amaçlı (Multinet / Sigorta / Vergi)
+          </span>
+          <span class="info-section__hint">
+            operasyonel toplama dahil değil
+          </span>
+        </button>
+
+        @if (infoOpen()) {
+          <div class="table-card">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Tarih</th>
+                  <th>Hizmet</th>
+                  <th>Sağlayıcı</th>
+                  <th class="table__num">Tutar</th>
+                  <th>Para Birimi</th>
+                  <th class="table__num">TL Karşılığı</th>
+                  <th>Kart</th>
+                  <th>Kullanan Takım</th>
+                  <th>Amaç</th>
+                  <th>Muhasebe E-posta</th>
+                  <th>Fatura Durumu</th>
+                  <th>Fatura Notu</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of informationalRows(); track row.id) {
+                  <tr class="table__row" (click)="openDetail(row)">
+                    <td>{{ formatDate(row.transactionDate) }}</td>
+                    <td class="table__strong">{{ row.serviceName || '—' }}</td>
+                    <td>{{ row.providerName || '—' }}</td>
+                    <td class="table__num">{{ formatNumber(row.amount) }}</td>
+                    <td>{{ row.currency || '—' }}</td>
+                    <td class="table__num">
+                      {{ formatNumber(row.amountTry, true) }}
+                    </td>
+                    <td>{{ row.cardLast4 ? '****' + row.cardLast4 : '—' }}</td>
+                    <td>{{ row.usingTeam || '—' }}</td>
+                    <td class="table__notes" [title]="row.purpose || ''">
+                      {{ row.purpose || '—' }}
+                    </td>
+                    <td class="table__email" [title]="row.accountingEmail || ''">
+                      {{ row.accountingEmail || '—' }}
+                    </td>
+                    <td>
+                      <app-status-badge [status]="row.invoiceStatus" />
+                    </td>
+                    <td class="table__notes" [title]="row.invoiceNote || ''">
+                      {{ row.invoiceNote || '—' }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="summary-bar summary-bar--info">
+            <div class="summary-bar__total">
+              <span class="summary-bar__label">Bilgi Amaçlı Toplam</span>
+              <span class="summary-bar__value">
+                {{ formatNumber(informationalTotalTry(), true) }}
+              </span>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+</section>
+
+<!-- Detay modalı (salt-okunur — durum değiştir / fatura ekle E3-05/E3-07) -->
+@if (selectedRow(); as row) {
+  <div class="modal-overlay" (click)="closeDetail()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <header class="modal__head">
+        <h3 class="modal__title">Harcama Detayı</h3>
+        <button type="button" class="modal__close" (click)="closeDetail()">
+          ×
+        </button>
+      </header>
+
+      <div class="modal__body">
+        <dl class="detail-grid">
+          <div class="detail-grid__item">
+            <dt>Tarih</dt>
+            <dd>{{ formatDate(row.transactionDate) }}</dd>
+          </div>
+          <div class="detail-grid__item">
+            <dt>Hizmet</dt>
+            <dd>{{ row.serviceName || '—' }}</dd>
+          </div>
+          <div class="detail-grid__item">
+            <dt>Sağlayıcı</dt>
+            <dd>{{ row.providerName || '—' }}</dd>
+          </div>
+          <div class="detail-grid__item">
+            <dt>Tutar</dt>
+            <dd>{{ formatNumber(row.amount) }}</dd>
+          </div>
+          <div class="detail-grid__item">
+            <dt>Para Birimi</dt>
+            <dd>{{ row.currency || '—' }}</dd>
+          </div>
+          <div class="detail-grid__item">
+            <dt>TL Karşılığı</dt>
+            <dd>{{ formatNumber(row.amountTry, true) }}</dd>
+          </div>
+          <div class="detail-grid__item">
+            <dt>Kart</dt>
+            <dd>{{ row.cardLast4 ? '****' + row.cardLast4 : '—' }}</dd>
+          </div>
+          <div class="detail-grid__item">
+            <dt>Kullanan Takım</dt>
+            <dd>{{ row.usingTeam || '—' }}</dd>
+          </div>
+          <div class="detail-grid__item detail-grid__item--full">
+            <dt>Amaç</dt>
+            <dd>{{ row.purpose || '—' }}</dd>
+          </div>
+          <div class="detail-grid__item detail-grid__item--full">
+            <dt>Muhasebe E-posta</dt>
+            <dd>{{ row.accountingEmail || '—' }}</dd>
+          </div>
+          <div class="detail-grid__item">
+            <dt>Fatura Durumu</dt>
+            <dd><app-status-badge [status]="row.invoiceStatus" /></dd>
+          </div>
+          <div class="detail-grid__item detail-grid__item--full">
+            <dt>Fatura Notu</dt>
+            <dd>{{ row.invoiceNote || '—' }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <footer class="modal__foot">
+        <button type="button" class="btn btn--ghost" (click)="closeDetail()">
+          Kapat
+        </button>
+      </footer>
+    </div>
+  </div>
+}

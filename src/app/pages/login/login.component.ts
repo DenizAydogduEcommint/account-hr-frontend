@@ -29,6 +29,8 @@ export class LoginComponent {
   readonly pending = signal(false);
   /** Satır içi hata mesajı (401 vb.). */
   readonly errorMessage = signal<string | null>(null);
+  /** Parola görünürlüğü (göz toggle). */
+  readonly showPassword = signal(false);
 
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -63,6 +65,11 @@ export class LoginComponent {
         }
       },
     });
+  }
+
+  /** Parola göster/gizle. */
+  togglePassword(): void {
+    this.showPassword.update((v) => !v);
   }
 
   /** Şablonda alan hata kontrolü için yardımcı. */

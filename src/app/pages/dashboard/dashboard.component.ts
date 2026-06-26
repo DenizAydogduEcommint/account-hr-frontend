@@ -22,6 +22,7 @@ import {
   STATUS_ORDER,
 } from '../../shared/status-colors';
 import { MonthSelectorComponent } from '../../shared/month-selector/month-selector.component';
+import { DEFAULT_MONTH } from '../../shared/default-month';
 import { DashboardSummary } from './dashboard.models';
 import { DashboardService } from './dashboard.service';
 
@@ -63,8 +64,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   private summarySub?: Subscription;
 
-  /** Seçili ay; varsayılan geçerli ay. */
-  readonly month = signal('2026-06');
+  /** Seçili ay; varsayılan paylaşılan DEFAULT_MONTH (son tam dolu ay). */
+  readonly month = signal(DEFAULT_MONTH);
   readonly summary = signal<DashboardSummary | null>(null);
   readonly loading = signal(false);
   readonly error = signal(false);
