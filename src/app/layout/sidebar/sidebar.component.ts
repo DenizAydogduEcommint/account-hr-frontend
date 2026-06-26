@@ -27,7 +27,7 @@ export class SidebarComponent {
     { label: 'Dashboard', icon: '▣', path: '/dashboard' },
     { label: 'Servisler', icon: '◆', path: '/services' },
     { label: 'Harcamalar', icon: '₺', path: '/expenses' },
-    { label: 'Eksik Fatura', icon: '!' },
+    { label: 'Eksik Fatura', icon: '!', path: '/missing-invoices' },
     { label: 'Faturalar', icon: '▤' },
   ];
 }

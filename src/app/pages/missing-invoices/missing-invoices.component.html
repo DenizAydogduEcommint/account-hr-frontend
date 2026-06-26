@@ -1,0 +1,115 @@
+<section class="missing">
+  <!-- Başlık -->
+  <header class="missing__head">
+    <div>
+      <h2 class="missing__title">Eksik Fatura</h2>
+      <p class="missing__subtitle">
+        Servis ↔ ay çapraz doğrulama: bu ay beklenen ama henüz gelmeyen faturalar
+      </p>
+    </div>
+  </header>
+
+  <!-- Ay seçici çubuğu -->
+  <div class="toolbar">
+    <div class="field">
+      <app-month-selector
+        [value]="month()"
+        (valueChange)="onMonthChange($event)"
+      />
+    </div>
+  </div>
+
+  <!-- Yükleniyor -->
+  @if (loading()) {
+    <div class="table-card">
+      <div class="skeleton skeleton--row"></div>
+      <div class="skeleton skeleton--row"></div>
+      <div class="skeleton skeleton--row"></div>
+    </div>
+  } @else if (error()) {
+    <div class="state-box state-box--error">
+      <div class="state-box__icon">!</div>
+      <p class="state-box__title">Veri yüklenemedi</p>
+      <p class="state-box__text">
+        Sunucuya ulaşılamadı. Lütfen tekrar deneyin.
+      </p>
+      <button type="button" class="btn btn--ghost btn--sm" (click)="retry()">
+        Tekrar dene
+      </button>
+    </div>
+  } @else if (!hasMissing()) {
+    <!-- Boş durum: tüm faturalar tamam -->
+    <div class="state-box state-box--ok">
+      <div class="state-box__icon state-box__icon--ok">✓</div>
+      <p class="state-box__title">Bu ay tüm faturalar tamam</p>
+      <p class="state-box__text">
+        Kontrol edilen aktif servislerin hepsinin bu ay için faturası bulundu.
+      </p>
+    </div>
+  } @else {
+    <!-- Belirgin sayaç -->
+    <div class="count-banner">
+      <span class="count-banner__num">{{ missingCount() }}</span>
+      <span class="count-banner__text">
+        Bu ay {{ missingCount() }} servisin faturası eksik
+      </span>
+    </div>
+
+    <!-- Eksik servis tablosu -->
+    <div class="table-card">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Hizmet</th>
+            <th>Sağlayıcı</th>
+            <th>Kart</th>
+            <th>Frekans</th>
+            <th class="table__num">Yaklaşık Tutar</th>
+            <th>İlgili E-posta</th>
+            <th class="table__actions">Aksiyon</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.serviceId) {
+            <tr class="table__row">
+              <td class="table__strong">{{ row.serviceName }}</td>
+              <td>{{ row.providerName || '—' }}</td>
+              <td>{{ row.cardLast4 ? '****' + row.cardLast4 : '—' }}</td>
+              <td>
+                <span class="freq-badge">
+                  {{ frequencyLabels[row.frequency] }}
+                </span>
+              </td>
+              <td class="table__num">{{ formatTry(row.approxAmountTry) }}</td>
+              <td class="table__email" [title]="row.contactEmail || ''">
+                {{ row.contactEmail || '—' }}
+              </td>
+              <td class="table__actions">
+                <div class="row-actions">
+                  <!-- E3-05: Fatura Yükle (placeholder, sonraki görevde aktif) -->
+                  <button
+                    type="button"
+                    class="btn btn--primary btn--sm"
+                    disabled
+                    title="Yakında (E3-05)"
+                  >
+                    Fatura Yükle
+                  </button>
+                  <!-- E6: Hatırlatma Gönder (placeholder, sonraki görevde aktif) -->
+                  <button
+                    type="button"
+                    class="btn btn--ghost btn--sm"
+                    disabled
+                    title="Yakında (E6)"
+                  >
+                    Hatırlatma Gönder
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

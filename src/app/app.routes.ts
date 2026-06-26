@@ -31,6 +31,13 @@ export const routes: Routes = [
             (m) => m.ExpensesComponent,
           ),
       },
+      {
+        path: 'missing-invoices',
+        loadComponent: () =>
+          import('./pages/missing-invoices/missing-invoices.component').then(
+            (m) => m.MissingInvoicesComponent,
+          ),
+      },
     ],
   },
 
