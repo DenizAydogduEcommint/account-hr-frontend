@@ -1,0 +1,232 @@
+@use 'styles/tokens' as *;
+
+// ---- Modal (harcamalar ekranı modal dilini paylaşır) --------------------
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(1, 11, 60, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: $space-4 $space-2;
+  z-index: 50;
+  overflow-y: auto;
+}
+
+.modal {
+  width: 100%;
+  max-width: 560px;
+  background: $ec-bg;
+  border-radius: $radius-card;
+  box-shadow: $shadow-lg;
+  display: flex;
+  flex-direction: column;
+
+  &__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: $space-3 $space-3 $space-2;
+    border-bottom: 1px solid $ec-border;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: $ec-text;
+  }
+
+  &__subtitle {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: rgba(34, 34, 34, 0.6);
+  }
+
+  &__close {
+    background: none;
+    border: none;
+    font-size: 26px;
+    line-height: 1;
+    color: rgba(34, 34, 34, 0.5);
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  &__body {
+    padding: $space-3;
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+  }
+
+  &__foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: $space-1;
+    padding: 0 $space-3 $space-3;
+  }
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+// ---- Form alanları -------------------------------------------------------
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space-2;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &__label {
+    font-size: 13px;
+    font-weight: 500;
+    color: $ec-text;
+  }
+
+  &__input {
+    height: 38px;
+    padding: 0 12px;
+    border: 1.5px solid $ec-border;
+    border-radius: $radius-input;
+    background: $ec-bg;
+    color: $ec-text;
+    font-family: inherit;
+    font-size: 14px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover {
+      border-color: $ec-primary;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $ec-primary;
+      box-shadow: 0 0 0 3px rgba(0, 178, 122, 0.15);
+    }
+
+    &--error {
+      border-color: $status-expected;
+
+      &:focus {
+        box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.15);
+      }
+    }
+
+    &--readonly {
+      background: $ec-gray-2;
+      color: rgba(34, 34, 34, 0.7);
+      cursor: default;
+
+      &:hover {
+        border-color: $ec-border;
+      }
+    }
+  }
+
+  &__textarea {
+    height: auto;
+    padding: 10px 12px;
+    resize: vertical;
+    line-height: 1.4;
+  }
+
+  &__error {
+    font-size: 12px;
+    font-weight: 500;
+    color: $status-expected;
+  }
+}
+
+.req {
+  color: $status-expected;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: $ec-text;
+  cursor: pointer;
+
+  input {
+    margin-top: 2px;
+  }
+}
+
+// ---- Bilgi / hata kutuları -----------------------------------------------
+.alert {
+  padding: 10px 14px;
+  border-radius: $radius-input;
+  font-size: 13px;
+  font-weight: 500;
+
+  &--error {
+    background: rgba(255, 68, 68, 0.1);
+    border: 1px solid rgba(255, 68, 68, 0.3);
+    color: #b3261e;
+  }
+
+  &--info {
+    background: $ec-gray-2;
+    border: 1px solid $ec-border;
+    color: rgba(34, 34, 34, 0.75);
+  }
+
+  &__link {
+    color: $ec-primary-dark;
+    font-weight: 600;
+    text-decoration: underline;
+  }
+}
+
+// ---- Butonlar (eksik fatura ekranı ile aynı dil) -------------------------
+.btn {
+  height: 40px;
+  padding: 0 18px;
+  border: none;
+  border-radius: $radius-input;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+
+  &--primary {
+    background: $ec-primary;
+    color: #fff;
+
+    &:hover:not(:disabled) {
+      background: $ec-primary-dark;
+    }
+  }
+
+  &--ghost {
+    background: transparent;
+    color: $ec-text;
+    border: 1.5px solid $ec-border;
+
+    &:hover:not(:disabled) {
+      border-color: $ec-primary;
+      color: $ec-primary;
+    }
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}

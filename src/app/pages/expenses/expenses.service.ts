@@ -3,8 +3,9 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { ExpenseCreateRequest } from '../../shared/expense-create/expense-create.models';
 import { InvoiceStatus } from '../../shared/status-colors';
-import { CardRef, ExpenseListResponse } from './expenses.models';
+import { CardRef, ExpenseListResponse, ExpenseRow } from './expenses.models';
 
 /** Harcama listesi sorgu parametreleri. */
 export interface ExpenseQuery {
@@ -51,5 +52,20 @@ export class ExpensesService {
   /** Kart referans listesini getirir (kart filtresi dropdown'u için). */
   cards(): Observable<CardRef[]> {
     return this.http.get<CardRef[]>(`${this.baseUrl}/cards`);
+  }
+
+  /** Takım referans listesini getirir (kullanan takım dropdown'u için). */
+  teams(): Observable<{ id: number; name: string }[]> {
+    return this.http.get<{ id: number; name: string }[]>(
+      `${this.baseUrl}/teams`,
+    );
+  }
+
+  /**
+   * Manuel tek harcama satırı oluşturur (E3-06). Oluşturulan satırı döndürür
+   * (liste GET ile aynı şekil). Doğrulama hatası → 400 standart ErrorResponse.
+   */
+  createExpense(req: ExpenseCreateRequest): Observable<ExpenseRow> {
+    return this.http.post<ExpenseRow>(`${this.baseUrl}/expenses`, req);
   }
 }

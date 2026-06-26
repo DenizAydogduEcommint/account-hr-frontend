@@ -2,7 +2,12 @@
 
 .expenses {
   &__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: $space-2;
     margin-bottom: $space-3;
+    flex-wrap: wrap;
   }
 
   &__title {
@@ -316,6 +321,15 @@
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+
+  &--primary {
+    background: $ec-primary;
+    color: #fff;
+
+    &:hover:not(:disabled) {
+      background: $ec-primary-dark;
+    }
+  }
 
   &--ghost {
     background: transparent;

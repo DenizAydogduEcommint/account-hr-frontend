@@ -7,6 +7,9 @@
         Seçili ayın tüm harcama satırları — Excel ay sheet'inin web karşılığı
       </p>
     </div>
+    <button type="button" class="btn btn--primary" (click)="openCreate()">
+      + Yeni Satır Ekle
+    </button>
   </header>
 
   <!-- Filtre + arama çubuğu -->
@@ -311,4 +314,13 @@
       </footer>
     </div>
   </div>
+}
+
+<!-- Yeni satır ekle modalı (E3-06) -->
+@if (createOpen()) {
+  <app-expense-create-modal
+    [defaultDate]="createDefaultDate()"
+    (created)="onCreated()"
+    (closed)="closeCreate()"
+  />
 }

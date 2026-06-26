@@ -38,6 +38,7 @@ export interface ServiceResponse {
   name: string;
   providerName: string | null;
   cardLast4: string | null;
+  usingTeamId: number | null;
   usingTeamName: string | null;
   frequency: Frequency | null;
   activeState: ActiveState | null;

@@ -1,0 +1,233 @@
+<div class="modal-overlay" (click)="cancel()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <header class="modal__head">
+      <div>
+        <h3 class="modal__title">Yeni Satır Ekle</h3>
+        <p class="modal__subtitle">Manuel harcama satırı oluştur</p>
+      </div>
+      <button
+        type="button"
+        class="modal__close"
+        aria-label="Kapat"
+        (click)="cancel()"
+        [disabled]="submitting()"
+      >
+        ×
+      </button>
+    </header>
+
+    <div class="modal__body">
+      <!-- Servis listesi yüklenemedi -->
+      @if (servicesError()) {
+        <div class="alert alert--error">
+          Servis listesi yüklenemedi. Lütfen tekrar deneyin.
+        </div>
+      }
+
+      <!-- Servis master listede boş -->
+      @if (serviceListEmpty()) {
+        <div class="alert alert--info">
+          Servis master listede yok — önce
+          <a routerLink="/services" class="alert__link" (click)="cancel()"
+            >Servisler ekranından</a
+          >
+          ekleyin.
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <!-- Servis seçimi -->
+        <label class="field">
+          <span class="field__label">Servis <span class="req">*</span></span>
+          <select
+            class="field__input"
+            formControlName="serviceId"
+            (change)="onServiceChange($event)"
+            [class.field__input--error]="invalid('serviceId')"
+          >
+            <option [value]="null" disabled>
+              @if (servicesLoading()) {
+                Yükleniyor…
+              } @else {
+                Servis seçin…
+              }
+            </option>
+            @for (svc of serviceList(); track svc.id) {
+              <option [value]="svc.id">{{ svc.name }}</option>
+            }
+          </select>
+          @if (invalid('serviceId')) {
+            <span class="field__error">Servis seçimi zorunlu.</span>
+          }
+        </label>
+
+        <!-- Ön-dolu Hizmet (salt-okunur) + Sağlayıcı -->
+        @if (selectedService(); as svc) {
+          <div class="form-grid">
+            <label class="field">
+              <span class="field__label">Hizmet</span>
+              <input
+                class="field__input field__input--readonly"
+                type="text"
+                [value]="svc.name"
+                readonly
+              />
+            </label>
+            <label class="field">
+              <span class="field__label">Sağlayıcı</span>
+              <input
+                class="field__input field__input--readonly"
+                type="text"
+                [value]="svc.providerName || '—'"
+                readonly
+              />
+            </label>
+          </div>
+        }
+
+        <!-- Tarih -->
+        <label class="field">
+          <span class="field__label">Tarih <span class="req">*</span></span>
+          <input
+            class="field__input"
+            type="date"
+            formControlName="transactionDate"
+            [class.field__input--error]="invalid('transactionDate')"
+          />
+          @if (invalid('transactionDate')) {
+            <span class="field__error">Tarih zorunlu.</span>
+          }
+        </label>
+
+        <!-- Tutar + Para birimi -->
+        <div class="form-grid">
+          <label class="field">
+            <span class="field__label">Tutar <span class="req">*</span></span>
+            <input
+              class="field__input"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0,00"
+              formControlName="amount"
+              [class.field__input--error]="invalid('amount')"
+            />
+            @if (invalid('amount')) {
+              <span class="field__error">Tutar 0'dan büyük olmalı.</span>
+            }
+          </label>
+          <label class="field">
+            <span class="field__label">Para Birimi <span class="req">*</span></span>
+            <select class="field__input" formControlName="currency">
+              @for (c of currencyOptions; track c) {
+                <option [value]="c">{{ c }}</option>
+              }
+            </select>
+          </label>
+        </div>
+
+        <!-- TL karşılığı + Kart -->
+        <div class="form-grid">
+          <label class="field">
+            <span class="field__label"
+              >TL Karşılığı <span class="req">*</span></span
+            >
+            <input
+              class="field__input"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0,00"
+              formControlName="amountTry"
+              [class.field__input--error]="invalid('amountTry')"
+            />
+            @if (invalid('amountTry')) {
+              <span class="field__error">TL karşılığı 0'dan büyük olmalı.</span>
+            }
+          </label>
+          <label class="field">
+            <span class="field__label">Kart</span>
+            <select class="field__input" formControlName="cardLast4">
+              <option value="">Servisin kartı</option>
+              @for (last4 of cardOptions; track last4) {
+                <option [value]="last4">****{{ last4 }}</option>
+              }
+            </select>
+          </label>
+        </div>
+
+        <!-- Kullanan takım -->
+        <label class="field">
+          <span class="field__label">Kullanan Takım</span>
+          <select class="field__input" formControlName="usingTeamId">
+            <option [ngValue]="null">— Takım yok —</option>
+            @for (team of teamList(); track team.id) {
+              <option [ngValue]="team.id">{{ team.name }}</option>
+            }
+          </select>
+        </label>
+
+        <!-- Amaç -->
+        <label class="field">
+          <span class="field__label">Amaç</span>
+          <textarea
+            class="field__input field__textarea"
+            rows="2"
+            placeholder="Opsiyonel — ne için kullanılıyor"
+            formControlName="purpose"
+          ></textarea>
+        </label>
+
+        <!-- Muhasebe e-posta (servisten salt-okunur; gönderilmez) -->
+        @if (selectedServiceEmail(); as email) {
+          <label class="field">
+            <span class="field__label">Muhasebe E-posta</span>
+            <input
+              class="field__input field__input--readonly"
+              type="text"
+              [value]="email"
+              readonly
+            />
+          </label>
+        }
+
+        <!-- Bilgi amaçlı -->
+        <label class="checkbox-row">
+          <input type="checkbox" formControlName="informational" />
+          <span
+            >Bilgi amaçlı (operasyonel toplama dahil edilmez — Multinet / sigorta
+            vb.)</span
+          >
+        </label>
+
+        <!-- Hata mesajı -->
+        @if (submitError()) {
+          <div class="alert alert--error">{{ submitError() }}</div>
+        }
+      </form>
+    </div>
+
+    <footer class="modal__foot">
+      <button
+        type="button"
+        class="btn btn--ghost"
+        (click)="cancel()"
+        [disabled]="submitting()"
+      >
+        İptal
+      </button>
+      <button
+        type="button"
+        class="btn btn--primary"
+        (click)="submit()"
+        [disabled]="submitting() || serviceListEmpty()"
+      >
+        @if (submitting()) {
+          Kaydediliyor…
+        } @else {
+          Kaydet
+        }
+      </button>
+    </footer>
+  </div>
+</div>

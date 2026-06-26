@@ -11,6 +11,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { MonthSelectorComponent } from '../../shared/month-selector/month-selector.component';
 import { DEFAULT_MONTH } from '../../shared/default-month';
+import { ExpenseCreateModalComponent } from '../../shared/expense-create/expense-create-modal.component';
 import { StatusBadgeComponent } from '../../shared/status-badge/status-badge.component';
 import {
   InvoiceStatus,
@@ -42,7 +43,11 @@ const PAGE_SIZE = 50;
 @Component({
   selector: 'app-expenses',
   standalone: true,
-  imports: [MonthSelectorComponent, StatusBadgeComponent],
+  imports: [
+    MonthSelectorComponent,
+    StatusBadgeComponent,
+    ExpenseCreateModalComponent,
+  ],
   templateUrl: './expenses.component.html',
   styleUrl: './expenses.component.scss',
 })
@@ -96,6 +101,12 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 
   // ---- Detay modalı -------------------------------------------------------
   readonly selectedRow = signal<ExpenseRow | null>(null);
+
+  // ---- Yeni satır ekle modalı (E3-06) ------------------------------------
+  readonly createOpen = signal(false);
+
+  /** Yeni satır için ön-dolu tarih: seçili ayın ilk günü ("YYYY-MM-01"). */
+  readonly createDefaultDate = computed(() => `${this.month()}-01`);
 
   ngOnInit(): void {
     this.searchSub = this.search$
@@ -195,6 +206,22 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 
   closeDetail(): void {
     this.selectedRow.set(null);
+  }
+
+  // ---- Yeni satır ekle modalı (E3-06) ------------------------------------
+  openCreate(): void {
+    this.createOpen.set(true);
+  }
+
+  closeCreate(): void {
+    this.createOpen.set(false);
+  }
+
+  /** Satır oluşturuldu → modalı kapat, ilk sayfaya dön, listeyi+toplamı yenile. */
+  onCreated(): void {
+    this.createOpen.set(false);
+    this.page.set(0);
+    this.fetch();
   }
 
   // ---- Şablon yardımcıları ----------------------------------------------
