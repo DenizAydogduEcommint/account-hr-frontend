@@ -1,0 +1,162 @@
+<div class="modal-overlay" (click)="cancel()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <header class="modal__head">
+      <div>
+        <h3 class="modal__title">Fatura Yükle</h3>
+        @if (serviceName) {
+          <p class="modal__subtitle">{{ serviceName }}</p>
+        }
+      </div>
+      <button
+        type="button"
+        class="modal__close"
+        aria-label="Kapat"
+        (click)="cancel()"
+        [disabled]="submitting()"
+      >
+        ×
+      </button>
+    </header>
+
+    <div class="modal__body">
+      <!-- Ay -->
+      <div class="form-row">
+        <label class="form-label">Ay</label>
+        <app-month-selector [value]="month()" (valueChange)="onMonthChange($event)" />
+      </div>
+
+      <!-- Tutar + Para birimi -->
+      <div class="form-grid">
+        <label class="field">
+          <span class="field__label">Tutar</span>
+          <input
+            class="field__input"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="0,00"
+            [value]="amount() ?? ''"
+            (input)="onAmountInput($event)"
+          />
+        </label>
+        <label class="field">
+          <span class="field__label">Para Birimi</span>
+          <select
+            class="field__input"
+            [value]="currency()"
+            (change)="onCurrencyChange($event)"
+          >
+            @for (c of currencyOptions; track c) {
+              <option [value]="c">{{ c }}</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      <!-- Açıklama -->
+      <label class="field">
+        <span class="field__label">Açıklama</span>
+        <textarea
+          class="field__input field__textarea"
+          rows="2"
+          placeholder="Fatura notu (opsiyonel)"
+          [value]="description()"
+          (input)="onDescriptionInput($event)"
+        ></textarea>
+      </label>
+
+      <!-- e-Fatura -->
+      <label class="checkbox-row">
+        <input
+          type="checkbox"
+          [checked]="eInvoice()"
+          (change)="onEInvoiceChange($event)"
+        />
+        <span>Bu bir e-Fatura (durum "e-Fatura" olur, aksi halde "Bulundu")</span>
+      </label>
+
+      <!-- Dropzone -->
+      <div
+        class="dropzone"
+        [class.dropzone--active]="dragging()"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+      >
+        <p class="dropzone__text">
+          Dosyaları buraya sürükleyin veya
+        </p>
+        <label class="btn btn--ghost btn--sm dropzone__btn">
+          Dosya Seç
+          <input
+            type="file"
+            multiple
+            accept=".pdf,.xml,.jpg,.jpeg,.png"
+            hidden
+            (change)="onFilesPicked($event)"
+          />
+        </label>
+        <p class="dropzone__hint">PDF, XML, JPG, PNG — her biri en fazla 10MB</p>
+      </div>
+
+      <!-- Dosya kuyruğu -->
+      @if (queue().length > 0) {
+        <ul class="file-list">
+          @for (item of queue(); track $index; let i = $index) {
+            <li
+              class="file-list__item"
+              [class.file-list__item--error]="item.error !== null"
+            >
+              <div class="file-list__info">
+                <span class="file-list__name">{{ item.file.name }}</span>
+                <span class="file-list__size">
+                  {{ formatSize(item.file.size) }}
+                </span>
+                @if (item.error) {
+                  <span class="file-list__error">{{ item.error }}</span>
+                }
+              </div>
+              <button
+                type="button"
+                class="file-list__remove"
+                aria-label="Kaldır"
+                (click)="removeFile(i)"
+                [disabled]="submitting()"
+              >
+                ×
+              </button>
+            </li>
+          }
+        </ul>
+      }
+
+      <!-- Hata mesajı -->
+      @if (submitError()) {
+        <div class="alert alert--error">{{ submitError() }}</div>
+      }
+    </div>
+
+    <footer class="modal__foot">
+      <button
+        type="button"
+        class="btn btn--ghost"
+        (click)="cancel()"
+        [disabled]="submitting()"
+      >
+        İptal
+      </button>
+      <button
+        type="button"
+        class="btn btn--primary"
+        (click)="submit()"
+        [disabled]="!canSubmit()"
+      >
+        @if (submitting()) {
+          Yükleniyor…
+        } @else {
+          Yükle
+        }
+      </button>
+    </footer>
+  </div>
+</div>

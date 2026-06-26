@@ -1,0 +1,313 @@
+@use 'styles/tokens' as *;
+
+// ---- Modal (harcamalar ekranı modal dilini paylaşır) --------------------
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(1, 11, 60, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: $space-4 $space-2;
+  z-index: 50;
+  overflow-y: auto;
+}
+
+.modal {
+  width: 100%;
+  max-width: 560px;
+  background: $ec-bg;
+  border-radius: $radius-card;
+  box-shadow: $shadow-lg;
+  display: flex;
+  flex-direction: column;
+
+  &__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: $space-3 $space-3 $space-2;
+    border-bottom: 1px solid $ec-border;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: $ec-text;
+  }
+
+  &__subtitle {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: rgba(34, 34, 34, 0.6);
+  }
+
+  &__close {
+    background: none;
+    border: none;
+    font-size: 26px;
+    line-height: 1;
+    color: rgba(34, 34, 34, 0.5);
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  &__body {
+    padding: $space-3;
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+  }
+
+  &__foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: $space-1;
+    padding: 0 $space-3 $space-3;
+  }
+}
+
+// ---- Form alanları -------------------------------------------------------
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: $ec-text;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space-2;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &__label {
+    font-size: 13px;
+    font-weight: 500;
+    color: $ec-text;
+  }
+
+  &__input {
+    height: 38px;
+    padding: 0 12px;
+    border: 1.5px solid $ec-border;
+    border-radius: $radius-input;
+    background: $ec-bg;
+    color: $ec-text;
+    font-family: inherit;
+    font-size: 14px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover {
+      border-color: $ec-primary;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $ec-primary;
+      box-shadow: 0 0 0 3px rgba(0, 178, 122, 0.15);
+    }
+  }
+
+  &__textarea {
+    height: auto;
+    padding: 10px 12px;
+    resize: vertical;
+    line-height: 1.4;
+  }
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: $ec-text;
+  cursor: pointer;
+
+  input {
+    margin-top: 2px;
+  }
+}
+
+// ---- Dropzone ------------------------------------------------------------
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: $space-3;
+  border: 2px dashed $ec-border;
+  border-radius: $radius-card;
+  background: $ec-gray-2;
+  text-align: center;
+  transition: border-color 0.15s ease, background 0.15s ease;
+
+  &--active {
+    border-color: $ec-primary;
+    background: rgba(0, 178, 122, 0.06);
+  }
+
+  &__text {
+    margin: 0;
+    font-size: 14px;
+    color: rgba(34, 34, 34, 0.7);
+  }
+
+  &__btn {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  &__hint {
+    margin: 0;
+    font-size: 12px;
+    color: rgba(34, 34, 34, 0.5);
+  }
+}
+
+// ---- Dosya kuyruğu -------------------------------------------------------
+.file-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid $ec-border;
+    border-radius: $radius-input;
+    background: $ec-bg;
+
+    &--error {
+      border-color: rgba(255, 68, 68, 0.5);
+      background: rgba(255, 68, 68, 0.05);
+    }
+  }
+
+  &__info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  &__name {
+    font-size: 13px;
+    font-weight: 500;
+    color: $ec-text;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 260px;
+  }
+
+  &__size {
+    font-size: 12px;
+    color: rgba(34, 34, 34, 0.5);
+  }
+
+  &__error {
+    font-size: 12px;
+    color: $status-expected;
+    font-weight: 500;
+  }
+
+  &__remove {
+    background: none;
+    border: none;
+    font-size: 20px;
+    line-height: 1;
+    color: rgba(34, 34, 34, 0.5);
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      color: $status-expected;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// ---- Hata kutusu ---------------------------------------------------------
+.alert {
+  padding: 10px 14px;
+  border-radius: $radius-input;
+  font-size: 13px;
+  font-weight: 500;
+
+  &--error {
+    background: rgba(255, 68, 68, 0.1);
+    border: 1px solid rgba(255, 68, 68, 0.3);
+    color: #b3261e;
+  }
+}
+
+// ---- Butonlar (eksik fatura ekranı ile aynı dil) -------------------------
+.btn {
+  height: 40px;
+  padding: 0 18px;
+  border: none;
+  border-radius: $radius-input;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+
+  &--primary {
+    background: $ec-primary;
+    color: #fff;
+
+    &:hover:not(:disabled) {
+      background: $ec-primary-dark;
+    }
+  }
+
+  &--ghost {
+    background: transparent;
+    color: $ec-text;
+    border: 1.5px solid $ec-border;
+
+    &:hover:not(:disabled) {
+      border-color: $ec-primary;
+      color: $ec-primary;
+    }
+  }
+
+  &--sm {
+    height: 34px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}

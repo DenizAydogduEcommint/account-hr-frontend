@@ -19,6 +19,14 @@
     </div>
   </div>
 
+  <!-- Başarı bildirimi (yükleme sonrası) -->
+  @if (uploadSuccess()) {
+    <div class="success-banner" role="status">
+      <span class="success-banner__icon">✓</span>
+      <span>{{ uploadSuccess() }}</span>
+    </div>
+  }
+
   <!-- Yükleniyor -->
   @if (loading()) {
     <div class="table-card">
@@ -86,12 +94,11 @@
               </td>
               <td class="table__actions">
                 <div class="row-actions">
-                  <!-- E3-05: Fatura Yükle (placeholder, sonraki görevde aktif) -->
+                  <!-- E3-05: Fatura Yükle -->
                   <button
                     type="button"
                     class="btn btn--primary btn--sm"
-                    disabled
-                    title="Yakında (E3-05)"
+                    (click)="openUpload(row)"
                   >
                     Fatura Yükle
                   </button>
@@ -111,5 +118,16 @@
         </tbody>
       </table>
     </div>
+  }
+
+  <!-- E3-05: Fatura yükleme modalı -->
+  @if (uploadTarget(); as target) {
+    <app-invoice-upload-modal
+      [serviceId]="target.serviceId"
+      [serviceName]="target.serviceName"
+      [month]="month()"
+      (uploaded)="onUploaded(target.serviceName)"
+      (closed)="closeUpload()"
+    />
   }
 </section>

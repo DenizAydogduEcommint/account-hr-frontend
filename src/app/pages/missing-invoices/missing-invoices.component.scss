@@ -65,6 +65,33 @@
   }
 }
 
+// ---- Başarı bildirimi (yükleme sonrası) ----------------------------------
+.success-banner {
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+  margin-bottom: $space-2;
+  padding: 10px 14px;
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: $radius-card;
+  font-size: 14px;
+  font-weight: 500;
+  color: $ec-text;
+
+  &__icon {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: $status-found;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+  }
+}
+
 // ---- Tablo kartı (yatay kaydırılabilir) ----------------------------------
 .table-card {
   background: $ec-bg;

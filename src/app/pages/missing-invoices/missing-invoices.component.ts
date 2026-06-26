@@ -9,6 +9,7 @@ import {
 import { Subscription } from 'rxjs';
 
 import { DEFAULT_MONTH } from '../../shared/default-month';
+import { InvoiceUploadModalComponent } from '../../shared/invoice-upload/invoice-upload-modal.component';
 import { MonthSelectorComponent } from '../../shared/month-selector/month-selector.component';
 import {
   FREQUENCY_LABELS_TR,
@@ -33,7 +34,7 @@ import { MissingInvoicesService } from './missing-invoices.service';
 @Component({
   selector: 'app-missing-invoices',
   standalone: true,
-  imports: [MonthSelectorComponent],
+  imports: [MonthSelectorComponent, InvoiceUploadModalComponent],
   templateUrl: './missing-invoices.component.html',
   styleUrl: './missing-invoices.component.scss',
 })
@@ -54,6 +55,12 @@ export class MissingInvoicesComponent implements OnInit, OnDestroy {
   // ---- Türetilmiş --------------------------------------------------------
   readonly missingCount = computed(() => this.rows().length);
   readonly hasMissing = computed(() => this.rows().length > 0);
+
+  // ---- Fatura yükleme modalı (E3-05) ------------------------------------
+  /** Açık modalın hedef satırı; null ise modal kapalı. */
+  readonly uploadTarget = signal<MissingInvoiceRow | null>(null);
+  /** Başarılı yükleme sonrası kısa bilgi mesajı (toast yerine). */
+  readonly uploadSuccess = signal<string | null>(null);
 
   ngOnInit(): void {
     this.fetch();
@@ -83,6 +90,31 @@ export class MissingInvoicesComponent implements OnInit, OnDestroy {
   }
 
   retry(): void {
+    this.fetch();
+  }
+
+  // ---- Fatura yükleme modalı aksiyonları (E3-05) ------------------------
+
+  /** Bir satır için yükleme modalını açar (servisId + ay ön-dolu). */
+  openUpload(row: MissingInvoiceRow): void {
+    this.uploadSuccess.set(null);
+    this.uploadTarget.set(row);
+  }
+
+  /** Modal kapatıldı (iptal). */
+  closeUpload(): void {
+    this.uploadTarget.set(null);
+  }
+
+  /**
+   * Yükleme başarılı: modalı kapat, kısa başarı mesajı göster ve listeyi + sayacı
+   * yenile (yüklenen servis artık eksik listesinde olmamalı → sayaç düşer).
+   */
+  onUploaded(serviceName: string): void {
+    this.uploadTarget.set(null);
+    this.uploadSuccess.set(
+      `${serviceName} için fatura yüklendi. Eksik listesi güncellendi.`,
+    );
     this.fetch();
   }
 

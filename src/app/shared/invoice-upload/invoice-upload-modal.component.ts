@@ -1,0 +1,238 @@
+import {
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+
+import { MonthSelectorComponent } from '../month-selector/month-selector.component';
+import {
+  ALLOWED_EXTENSIONS,
+  CURRENCY_OPTIONS,
+  Currency,
+  InvoiceUploadResponse,
+  MAX_FILE_SIZE_BYTES,
+} from './invoice-upload.models';
+import { InvoiceUploadService } from './invoice-upload.service';
+
+/** Kuyruktaki bir dosya: dosya + (varsa) istemci-taraflı doğrulama hatası. */
+interface QueuedFile {
+  file: File;
+  error: string | null;
+}
+
+/**
+ * E3-05 — Yeniden kullanılabilir Fatura Yükleme modalı.
+ *
+ * Eksik Fatura ekranındaki "Fatura Yükle" butonundan (servisId + ay ön-dolu) ya da
+ * (ileride) harcama satırından açılır. Kullanıcı tutar/para birimi/açıklama girer,
+ * e-Fatura işaretler ve bir veya birden çok dosyayı sürükle-bırak ya da dosya seçici
+ * ile ekler. İstemci-taraflı tip (PDF/XML/JPG/PNG) + boyut (≤10MB) doğrulaması yapılır.
+ *
+ * Gönderim → multipart POST /api/v1/invoices. Başarı: {@link uploaded} yayınlanır
+ * (çağıran listeyi + sayacı yeniler) ve modal kapanır. Hata: anlaşılır mesaj gösterilir,
+ * hiçbir şey yarım kaydedilmez (atomiklik backend'de). Türkçe arayüz; tasarım sistemi.
+ */
+@Component({
+  selector: 'app-invoice-upload-modal',
+  standalone: true,
+  imports: [MonthSelectorComponent],
+  templateUrl: './invoice-upload-modal.component.html',
+  styleUrl: './invoice-upload-modal.component.scss',
+})
+export class InvoiceUploadModalComponent {
+  private readonly service = inject(InvoiceUploadService);
+
+  /** Yüklenecek servisin id'si (eksik ekranından ön-dolu). */
+  @Input({ required: true }) serviceId!: number;
+  /** Servis adı (başlıkta gösterilir, salt-okunur). */
+  @Input() serviceName = '';
+  /** Ön-dolu ay ("YYYY-MM"). Signal ile tutulur ki canSubmit reaktif olsun. */
+  readonly month = signal('');
+  @Input('month') set monthInput(value: string) {
+    this.month.set(value ?? '');
+  }
+
+  /** Başarılı yükleme — çağıran listeyi/sayacı yeniler. */
+  @Output() uploaded = new EventEmitter<InvoiceUploadResponse>();
+  /** Modal kapatıldı (iptal ya da başarı sonrası). */
+  @Output() closed = new EventEmitter<void>();
+
+  // ---- Form durumu -------------------------------------------------------
+  readonly amount = signal<number | null>(null);
+  readonly currency = signal<Currency>('TRY');
+  readonly description = signal('');
+  readonly eInvoice = signal(false);
+  readonly queue = signal<QueuedFile[]>([]);
+  readonly dragging = signal(false);
+
+  readonly submitting = signal(false);
+  readonly submitError = signal<string | null>(null);
+
+  readonly currencyOptions = CURRENCY_OPTIONS;
+
+  /** Geçerli (hatasız) dosyalar var mı + tümü geçerli mi? Gönderim koşulu. */
+  readonly validFiles = computed(() =>
+    this.queue().filter((q) => q.error === null),
+  );
+  readonly hasInvalid = computed(() =>
+    this.queue().some((q) => q.error !== null),
+  );
+  readonly canSubmit = computed(
+    () =>
+      !this.submitting() &&
+      this.validFiles().length > 0 &&
+      !this.hasInvalid() &&
+      !!this.month(),
+  );
+
+  // ---- Dosya kuyruğu yönetimi -------------------------------------------
+
+  onFilesPicked(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files) {
+      this.addFiles(Array.from(input.files));
+    }
+    // Aynı dosyayı tekrar seçebilmek için input'u temizle.
+    input.value = '';
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    this.dragging.set(true);
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    this.dragging.set(false);
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.dragging.set(false);
+    if (event.dataTransfer?.files) {
+      this.addFiles(Array.from(event.dataTransfer.files));
+    }
+  }
+
+  removeFile(index: number): void {
+    this.queue.update((q) => q.filter((_, i) => i !== index));
+  }
+
+  private addFiles(files: File[]): void {
+    const queued: QueuedFile[] = files.map((file) => ({
+      file,
+      error: this.validate(file),
+    }));
+    this.queue.update((q) => [...q, ...queued]);
+  }
+
+  /** İstemci-taraflı doğrulama: izinli tip + ≤10MB. Hata yoksa null. */
+  private validate(file: File): string | null {
+    const ext = this.extensionOf(file.name);
+    if (!ext || !ALLOWED_EXTENSIONS.includes(ext)) {
+      return 'İzin verilmeyen dosya tipi (PDF, XML, JPG, PNG)';
+    }
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      return 'Dosya 10MB sınırını aşıyor';
+    }
+    return null;
+  }
+
+  private extensionOf(name: string): string | null {
+    const dot = name.lastIndexOf('.');
+    if (dot < 0 || dot === name.length - 1) {
+      return null;
+    }
+    return name.substring(dot + 1).toLowerCase();
+  }
+
+  // ---- Form alanları -----------------------------------------------------
+
+  onAmountInput(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    this.amount.set(value === '' ? null : Number(value));
+  }
+
+  onCurrencyChange(event: Event): void {
+    this.currency.set((event.target as HTMLSelectElement).value as Currency);
+  }
+
+  onDescriptionInput(event: Event): void {
+    this.description.set((event.target as HTMLTextAreaElement).value);
+  }
+
+  onEInvoiceChange(event: Event): void {
+    this.eInvoice.set((event.target as HTMLInputElement).checked);
+  }
+
+  onMonthChange(month: string): void {
+    this.month.set(month);
+  }
+
+  // ---- Gönderim ----------------------------------------------------------
+
+  submit(): void {
+    if (!this.canSubmit()) {
+      return;
+    }
+    this.submitting.set(true);
+    this.submitError.set(null);
+
+    this.service
+      .upload({
+        serviceId: this.serviceId,
+        month: this.month(),
+        amount: this.amount(),
+        currency: this.currency(),
+        description: this.description() || null,
+        eInvoice: this.eInvoice(),
+        files: this.validFiles().map((q) => q.file),
+      })
+      .subscribe({
+        next: (res) => {
+          this.submitting.set(false);
+          this.uploaded.emit(res);
+        },
+        error: (err) => {
+          this.submitting.set(false);
+          this.submitError.set(this.messageOf(err));
+        },
+      });
+  }
+
+  cancel(): void {
+    if (this.submitting()) {
+      return;
+    }
+    this.closed.emit();
+  }
+
+  /** Backend hata gövdesinden ({error,message}) anlaşılır Türkçe mesaj çıkarır. */
+  private messageOf(err: unknown): string {
+    const e = err as { error?: { message?: string }; status?: number };
+    if (e?.error?.message) {
+      return e.error.message;
+    }
+    if (e?.status === 0) {
+      return 'Sunucuya ulaşılamadı. Lütfen tekrar deneyin.';
+    }
+    return 'Yükleme başarısız oldu. Lütfen tekrar deneyin.';
+  }
+
+  // ---- Şablon yardımcıları ----------------------------------------------
+
+  /** Byte → okunabilir boyut (KB/MB). */
+  formatSize(bytes: number): string {
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    }
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(0)} KB`;
+    }
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+}
