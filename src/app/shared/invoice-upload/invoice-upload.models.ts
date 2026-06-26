@@ -4,8 +4,11 @@
  * Backend sözleşmesi:
  *   POST /api/v1/invoices (multipart/form-data)
  *     parts: serviceId (zorunlu), month (YYYY-MM, zorunlu), amount?, currency?,
- *            description?, eInvoice?, files (1..N)
+ *            description?, eInvoice?, kdvRate?, files (1..N)
  *   → 201 InvoiceUploadResponse
+ *
+ * kdvRate (E3-11): opsiyonel KDV oranı (yüzde, ör. 20). Verilirse matrah (net) ve
+ * KDV tutarı brüt tutardan SUNUCU tarafında hesaplanır; verilmezse KDV kaydedilmez.
  */
 
 /** Para birimi (backend Currency enum aynası). */
@@ -43,8 +46,16 @@ export interface InvoiceUploadRequest {
   currency: Currency | null;
   description: string | null;
   eInvoice: boolean;
+  /**
+   * KDV oranı (yüzde, ör. 20). null/yok → KDV kaydedilmez. Sunucu bu orandan
+   * brüt tutar üzerinden matrah ve KDV tutarını hesaplar (istemci hesaplamaz).
+   */
+  kdvRate: number | null;
   files: File[];
 }
+
+/** Sık kullanılan KDV oranları (yüzde). "Diğer" serbest giriş şablonda eklenir. */
+export const COMMON_KDV_RATES = [0, 1, 10, 20];
 
 /** İzin verilen dosya uzantıları (küçük harf, noktasız). */
 export const ALLOWED_EXTENSIONS = ['pdf', 'xml', 'jpg', 'jpeg', 'png'];

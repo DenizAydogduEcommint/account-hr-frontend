@@ -346,6 +346,38 @@
           </div>
         </dl>
 
+        <!-- KDV (E3-11): sunucu brüt tutardan hesaplar; girilmemişse muted not -->
+        <section class="kdv">
+          <h4 class="kdv__title">KDV</h4>
+          @if (row.kdvRate != null && row.netAmountTry == null && row.kdvAmountTry == null) {
+            <p class="kdv__empty">
+              KDV oranı %{{ row.kdvRate }} kaydedildi; TL tutarı bilinmediğinden
+              matrah ve KDV hesaplanamadı.
+            </p>
+          } @else if (row.kdvRate != null) {
+            <dl class="kdv-grid">
+              <div class="kdv-grid__item">
+                <dt>Oran</dt>
+                <dd>%{{ row.kdvRate }}</dd>
+              </div>
+              <div class="kdv-grid__item">
+                <dt>Matrah (net)</dt>
+                <dd>~ {{ formatNumber(row.netAmountTry, true) }}</dd>
+              </div>
+              <div class="kdv-grid__item">
+                <dt>KDV Tutarı</dt>
+                <dd>{{ formatNumber(row.kdvAmountTry, true) }}</dd>
+              </div>
+              <div class="kdv-grid__item">
+                <dt>Brüt (TL)</dt>
+                <dd>{{ formatNumber(row.amountTry, true) }}</dd>
+              </div>
+            </dl>
+          } @else {
+            <p class="kdv__empty">KDV girilmemiş.</p>
+          }
+        </section>
+
         <!-- Faturalar (E3-09): satıra ekli dosyalar — önizle / indir -->
         <section class="files">
           <h4 class="files__title">Faturalar</h4>

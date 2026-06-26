@@ -44,6 +44,16 @@ export interface ExpenseRow {
   /** Renk hex (# olmadan), ör. "4CAF50". Status null ise null. */
   invoiceColorHex: string | null;
   invoiceNote: string | null;
+  /**
+   * KDV (E3-11) — sunucu tarafında brüt (amountTry) üzerinden hesaplanır.
+   * KDV girilmemişse üçü de null.
+   */
+  /** KDV oranı (yüzde, ör. 20). null → KDV girilmemiş. */
+  kdvRate: number | null;
+  /** KDV tutarı (TL). null → KDV girilmemiş. */
+  kdvAmountTry: number | null;
+  /** Matrah / net tutar (TL) = brüt − KDV. null → KDV girilmemiş. */
+  netAmountTry: number | null;
 }
 
 /** Aylık harcamalar listeleme yanıtı. */

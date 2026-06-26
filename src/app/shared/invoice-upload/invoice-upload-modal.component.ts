@@ -13,6 +13,7 @@ import { Subscription } from 'rxjs';
 import { MonthSelectorComponent } from '../month-selector/month-selector.component';
 import {
   ALLOWED_EXTENSIONS,
+  COMMON_KDV_RATES,
   CURRENCY_OPTIONS,
   Currency,
   MAX_FILE_SIZE_BYTES,
@@ -76,10 +77,40 @@ export class InvoiceUploadModalComponent implements OnDestroy {
   readonly queue = signal<QueuedFile[]>([]);
   readonly dragging = signal(false);
 
+  // ---- KDV (E3-11) -------------------------------------------------------
+  /**
+   * KDV oranı seçimi. Sentinel değerler:
+   *   '' → KDV girme (varsayılan, hiç gönderilmez)
+   *   'other' → "Diğer" serbest giriş aktif ({@link kdvRateOther} okunur)
+   *   sayısal string ('0'|'1'|'10'|'20') → o oran.
+   * Matrah/KDV tutarı SUNUCUDA hesaplanır; burada yalnızca oran toplanır.
+   */
+  readonly kdvSelection = signal<string>('');
+  /** "Diğer" seçiliyken serbest girilen oran (yüzde). null → boş. */
+  readonly kdvRateOther = signal<number | null>(null);
+
   readonly submitting = signal(false);
   readonly submitError = signal<string | null>(null);
 
   readonly currencyOptions = CURRENCY_OPTIONS;
+  readonly commonKdvRates = COMMON_KDV_RATES;
+
+  /**
+   * Gönderilecek efektif KDV oranı. Hiç (''), ya da "Diğer" seçili ama boş/geçersiz
+   * (≤ negatif) ise null → istek gövdesinde omit edilir.
+   */
+  readonly effectiveKdvRate = computed<number | null>(() => {
+    const sel = this.kdvSelection();
+    if (sel === '') {
+      return null;
+    }
+    if (sel === 'other') {
+      const v = this.kdvRateOther();
+      return v != null && v >= 0 ? v : null;
+    }
+    const n = Number(sel);
+    return Number.isFinite(n) ? n : null;
+  });
 
   /** Geçerli (hatasız) dosyalar var mı + tümü geçerli mi? Gönderim koşulu. */
   readonly validFiles = computed(() =>
@@ -176,6 +207,20 @@ export class InvoiceUploadModalComponent implements OnDestroy {
     this.eInvoice.set((event.target as HTMLInputElement).checked);
   }
 
+  onKdvSelectionChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.kdvSelection.set(value);
+    // "Diğer" dışına çıkılınca serbest girişi temizle (bayat değer sızmasın).
+    if (value !== 'other') {
+      this.kdvRateOther.set(null);
+    }
+  }
+
+  onKdvRateOtherInput(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    this.kdvRateOther.set(value === '' ? null : Number(value));
+  }
+
   onMonthChange(month: string): void {
     this.month.set(month);
   }
@@ -198,6 +243,7 @@ export class InvoiceUploadModalComponent implements OnDestroy {
         currency: this.currency(),
         description: this.description() || null,
         eInvoice: this.eInvoice(),
+        kdvRate: this.effectiveKdvRate(),
         files: this.validFiles().map((q) => q.file),
       })
       .subscribe({

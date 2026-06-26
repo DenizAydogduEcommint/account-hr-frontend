@@ -33,6 +33,10 @@ export class InvoiceUploadService {
       form.append('description', req.description.trim());
     }
     form.append('eInvoice', String(req.eInvoice));
+    // KDV oranı opsiyonel: yalnızca verildiyse gönder (yok → sunucu KDV kaydetmez).
+    if (req.kdvRate != null) {
+      form.append('kdvRate', String(req.kdvRate));
+    }
     for (const file of req.files) {
       form.append('files', file, file.name);
     }

@@ -75,6 +75,41 @@
         <span>Bu bir e-Fatura (durum "e-Fatura" olur, aksi halde "Bulundu")</span>
       </label>
 
+      <!-- KDV oranı (opsiyonel, E3-11) -->
+      <div class="form-grid">
+        <label class="field">
+          <span class="field__label">KDV Oranı</span>
+          <select
+            class="field__input"
+            [value]="kdvSelection()"
+            (change)="onKdvSelectionChange($event)"
+          >
+            <option value="">KDV girme</option>
+            @for (rate of commonKdvRates; track rate) {
+              <option [value]="rate">%{{ rate }}</option>
+            }
+            <option value="other">Diğer…</option>
+          </select>
+        </label>
+        @if (kdvSelection() === 'other') {
+          <label class="field">
+            <span class="field__label">Oran (%)</span>
+            <input
+              class="field__input"
+              type="number"
+              step="0.1"
+              min="0"
+              placeholder="Örn. 8"
+              [value]="kdvRateOther() ?? ''"
+              (input)="onKdvRateOtherInput($event)"
+            />
+          </label>
+        }
+      </div>
+      <p class="field-help">
+        Brüt tutardan matrah ve KDV otomatik hesaplanır.
+      </p>
+
       <!-- Dropzone -->
       <div
         class="dropzone"

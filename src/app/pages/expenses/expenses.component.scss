@@ -487,6 +487,54 @@
   }
 }
 
+// ---- KDV (E3-11) ----------------------------------------------------------
+.kdv {
+  margin-top: $space-3;
+  padding-top: $space-3;
+  border-top: 1px solid $ec-border;
+
+  &__title {
+    margin: 0 0 $space-2;
+    font-size: 14px;
+    font-weight: 700;
+    color: $ec-text;
+  }
+
+  &__empty {
+    margin: 0;
+    font-size: 14px;
+    color: rgba(34, 34, 34, 0.5);
+  }
+}
+
+.kdv-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: $space-2;
+  margin: 0;
+
+  &__item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    dt {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: rgba(34, 34, 34, 0.5);
+    }
+
+    dd {
+      margin: 0;
+      font-size: 14px;
+      color: $ec-text;
+      word-break: break-word;
+    }
+  }
+}
+
 // ---- Faturalar (E3-09) — dosya listesi -----------------------------------
 .files {
   margin-top: $space-3;
