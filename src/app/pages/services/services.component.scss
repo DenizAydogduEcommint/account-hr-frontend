@@ -1,0 +1,460 @@
+@use 'styles/tokens' as *;
+
+.services {
+  &__head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: $space-2;
+    margin-bottom: $space-3;
+    flex-wrap: wrap;
+  }
+
+  &__title {
+    margin: 0 0 6px;
+    font-size: 24px;
+    font-weight: 700;
+    color: $ec-text;
+  }
+
+  &__subtitle {
+    margin: 0;
+    font-size: 14px;
+    color: rgba(34, 34, 34, 0.6);
+  }
+}
+
+// ---- Toolbar (filtre + arama) ------------------------------
+.toolbar {
+  display: flex;
+  gap: $space-2;
+  align-items: flex-end;
+  margin-bottom: $space-3;
+  flex-wrap: wrap;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &--grow {
+    flex: 1;
+    min-width: 220px;
+  }
+
+  &--full {
+    grid-column: 1 / -1;
+  }
+
+  &__label {
+    font-size: 13px;
+    font-weight: 500;
+    color: $ec-text;
+  }
+
+  &__input,
+  &__select {
+    height: 38px;
+    padding: 0 12px;
+    border: 1.5px solid $ec-border;
+    border-radius: $radius-input;
+    background: $ec-bg;
+    color: $ec-text;
+    font-family: inherit;
+    font-size: 14px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover {
+      border-color: $ec-primary;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $ec-primary;
+      box-shadow: 0 0 0 3px rgba(0, 178, 122, 0.15);
+    }
+  }
+
+  &__select {
+    cursor: pointer;
+  }
+
+  &__textarea {
+    height: auto;
+    padding: 10px 12px;
+    resize: vertical;
+  }
+
+  &__error {
+    font-size: 12px;
+    color: $status-expected;
+  }
+}
+
+// ---- Tablo kartı -------------------------------------------
+.table-card {
+  background: $ec-bg;
+  border: 1px solid $ec-border;
+  border-radius: $radius-card;
+  box-shadow: $shadow-sm;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  thead th {
+    text-align: left;
+    padding: 14px 12px;
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: rgba(34, 34, 34, 0.55);
+    border-bottom: 2px solid $ec-border;
+    white-space: nowrap;
+    background: $ec-gray-2;
+  }
+
+  tbody td {
+    padding: 12px;
+    border-bottom: 1px solid $ec-border;
+    color: $ec-text;
+    vertical-align: middle;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr:hover {
+    background: $ec-gray-1;
+  }
+
+  &__strong {
+    font-weight: 600;
+  }
+
+  &__num {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  &__email,
+  &__notes {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__actions {
+    white-space: nowrap;
+    text-align: right;
+  }
+}
+
+// ---- Rozetler (badge) --------------------------------------
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+
+  &--green {
+    background: $status-found;
+  }
+
+  &--gray {
+    background: #9aa0a6;
+  }
+
+  &--orange {
+    background: $status-to-investigate;
+  }
+
+  &--neutral {
+    background: $ec-gray-3;
+    color: rgba(34, 34, 34, 0.75);
+  }
+}
+
+// ---- Buton & link-buton ------------------------------------
+.btn {
+  height: 40px;
+  padding: 0 18px;
+  border: none;
+  border-radius: $radius-input;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+
+  &--primary {
+    background: $ec-primary;
+    color: #fff;
+
+    &:hover {
+      background: $ec-primary-dark;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  &--ghost {
+    background: transparent;
+    color: $ec-text;
+    border: 1.5px solid $ec-border;
+
+    &:hover {
+      border-color: $ec-primary;
+      color: $ec-primary;
+    }
+  }
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: $ec-primary;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &--muted {
+    color: rgba(34, 34, 34, 0.55);
+  }
+
+  &--danger {
+    color: $status-expected;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    text-decoration: none;
+  }
+}
+
+// ---- Durum kutusu (boş / hata) -----------------------------
+.state-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  background: $ec-bg;
+  border: 1px solid $ec-border;
+  border-radius: $radius-card;
+  box-shadow: $shadow-sm;
+  padding: $space-6 $space-3;
+
+  &__icon {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: $ec-gray-1;
+    color: rgba(34, 34, 34, 0.5);
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: $ec-text;
+  }
+
+  &__text {
+    margin: 0;
+    font-size: 14px;
+    color: rgba(34, 34, 34, 0.6);
+  }
+
+  &--error &__icon {
+    background: rgba(255, 68, 68, 0.12);
+    color: $status-expected;
+  }
+}
+
+// ---- İskelet (loading) -------------------------------------
+.skeleton {
+  border-radius: $radius-input;
+  background: linear-gradient(
+    90deg,
+    $ec-gray-1 25%,
+    $ec-gray-3 50%,
+    $ec-gray-1 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+
+  &--row {
+    height: 44px;
+    margin: 10px;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+// ---- Modal -------------------------------------------------
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(1, 11, 60, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: $space-4 $space-2;
+  z-index: 50;
+  overflow-y: auto;
+}
+
+.modal {
+  width: 100%;
+  max-width: 720px;
+  background: $ec-bg;
+  border-radius: $radius-card;
+  box-shadow: $shadow-lg;
+  display: flex;
+  flex-direction: column;
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $space-3 $space-3 $space-2;
+    border-bottom: 1px solid $ec-border;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: $ec-text;
+  }
+
+  &__close {
+    background: none;
+    border: none;
+    font-size: 26px;
+    line-height: 1;
+    color: rgba(34, 34, 34, 0.5);
+    cursor: pointer;
+
+    &:hover {
+      color: $ec-text;
+    }
+  }
+
+  &__body {
+    padding: $space-3;
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+  }
+
+  &__error {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: $radius-input;
+    background: rgba(255, 68, 68, 0.1);
+    color: $status-expected;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  &__foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: $space-1;
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space-2;
+}
+
+// ---- İletişim (contacts) -----------------------------------
+.contacts {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  border-top: 1px solid $ec-border;
+  padding-top: $space-2;
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.contact-row {
+  display: flex;
+  gap: $space-1;
+  align-items: flex-start;
+  flex-wrap: wrap;
+
+  &__email {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__source {
+    width: 140px;
+  }
+
+  &__primary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 38px;
+    font-size: 13px;
+    color: $ec-text;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .field--full {
+    grid-column: auto;
+  }
+}

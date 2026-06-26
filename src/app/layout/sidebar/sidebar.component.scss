@@ -20,15 +20,10 @@
   padding: 0 8px $space-3;
 
   &__mark {
-    display: grid;
-    place-items: center;
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     border-radius: $radius-input;
-    background: $ec-primary;
-    color: #fff;
-    font-weight: 700;
-    font-size: 13px;
+    object-fit: contain;
   }
 
   &__name {

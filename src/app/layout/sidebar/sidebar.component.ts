@@ -1,11 +1,18 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
+/** Sol navigasyon öğesi. `path` varsa gerçek route, yoksa "yakında" placeholder. */
+interface NavItem {
+  label: string;
+  icon: string;
+  path?: string;
+}
+
 /**
  * Sol navigasyon. Navy (#010b3c) arka plan, 240px sabit genişlik.
- * Yalnızca "Dashboard" gerçek bir route'tur (routerLink + routerLinkActive);
- * diğerleri henüz mevcut olmayan E3 ekranları için "yakında" placeholder'larıdır
- * (route kırılmasını önlemek için routerLink YOK).
+ * `path`'i olan öğeler gerçek route'tur (routerLink + routerLinkActive);
+ * `path`'i olmayanlar henüz mevcut olmayan E3 ekranları için "yakında"
+ * placeholder'larıdır (route kırılmasını önlemek için routerLink YOK).
  */
 @Component({
   selector: 'app-sidebar',
@@ -16,8 +23,9 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 })
 export class SidebarComponent {
   /** Diğer E3 ekranları geldikçe `path` eklenip enabled yapılacak. */
-  readonly nav = [
-    { label: 'Servisler', icon: '◆' },
+  readonly nav: NavItem[] = [
+    { label: 'Dashboard', icon: '▣', path: '/dashboard' },
+    { label: 'Servisler', icon: '◆', path: '/services' },
     { label: 'Harcamalar', icon: '₺' },
     { label: 'Eksik Fatura', icon: '!' },
     { label: 'Faturalar', icon: '▤' },

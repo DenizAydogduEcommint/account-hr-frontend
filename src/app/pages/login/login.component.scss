@@ -1,18 +1,31 @@
 .login {
+  position: relative;
   min-height: 100vh;
   display: grid;
   place-items: center;
   padding: var(--space-4);
-  background: var(--gray-50);
+  background:
+    url('/assets/login-bg.png') center / cover no-repeat,
+    var(--gray-50);
+
+  // Subtle backdrop behind the card for contrast/readability.
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.35);
+  }
 
   &__card {
+    position: relative;
+    z-index: 1;
     width: 100%;
     max-width: 400px;
     background: #ffffff;
     border: 1px solid var(--gray-200);
     border-radius: 12px;
-    box-shadow: var(--shadow-md);
-    padding: 32px;
+    box-shadow: var(--shadow-lg, 0 20px 40px rgba(15, 23, 42, 0.25));
+    padding: 40px;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -21,19 +34,14 @@
   &__brand {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
   }
 
   &__mark {
-    display: grid;
-    place-items: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: var(--primary-600);
-    color: #fff;
-    font-size: 13px;
-    font-weight: 700;
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    object-fit: contain;
   }
 
   &__title {

@@ -1,0 +1,321 @@
+<section class="services">
+  <!-- Başlık + aksiyon -->
+  <header class="services__head">
+    <div>
+      <h2 class="services__title">Servisler</h2>
+      <p class="services__subtitle">
+        Ödenen tüm servislerin master listesi — eksik fatura tespitinin kaynağı
+      </p>
+    </div>
+    @if (isAdmin()) {
+      <button type="button" class="btn btn--primary" (click)="openCreate()">
+        + Yeni Servis
+      </button>
+    }
+  </header>
+
+  <!-- Filtre + arama çubuğu -->
+  <div class="toolbar">
+    <label class="field">
+      <span class="field__label">Aktiflik</span>
+      <select class="field__select" (change)="onActiveFilterChange($event)">
+        <option value="">Tümü</option>
+        @for (opt of activeStateOptions; track opt) {
+          <option [value]="opt">{{ activeStateLabels[opt] }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="field field--grow">
+      <span class="field__label">Ara</span>
+      <input
+        type="text"
+        class="field__input"
+        placeholder="Hizmet veya sağlayıcı adı…"
+        (input)="onSearchInput($event)"
+      />
+    </label>
+  </div>
+
+  <!-- Yükleniyor -->
+  @if (loading()) {
+    <div class="table-card">
+      <div class="skeleton skeleton--row"></div>
+      <div class="skeleton skeleton--row"></div>
+      <div class="skeleton skeleton--row"></div>
+      <div class="skeleton skeleton--row"></div>
+    </div>
+  } @else if (error()) {
+    <div class="state-box state-box--error">
+      <div class="state-box__icon">!</div>
+      <p class="state-box__title">Veri yüklenemedi</p>
+      <p class="state-box__text">
+        Sunucuya ulaşılamadı. Lütfen daha sonra tekrar deneyin.
+      </p>
+    </div>
+  } @else if (rows().length === 0) {
+    <div class="state-box state-box--empty">
+      <div class="state-box__icon">∅</div>
+      <p class="state-box__title">Servis bulunamadı.</p>
+      <p class="state-box__text">Filtreyi değiştirin veya yeni servis ekleyin.</p>
+    </div>
+  } @else {
+    <div class="table-card">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Hizmet</th>
+            <th>Sağlayıcı</th>
+            <th>Kart</th>
+            <th>Frekans</th>
+            <th>Aktif</th>
+            <th>Aktif Aylar</th>
+            <th class="table__num">Yaklaşık Tutar</th>
+            <th>Fatura E-posta</th>
+            <th>Fatura Kaynağı</th>
+            <th>Notlar</th>
+            @if (isAdmin()) {
+              <th class="table__actions">İşlem</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.id) {
+            <tr>
+              <td class="table__strong">{{ row.name }}</td>
+              <td>{{ row.providerName || '—' }}</td>
+              <td>{{ row.cardLast4 ? '****' + row.cardLast4 : '—' }}</td>
+              <td>
+                @if (row.frequency) {
+                  <span class="badge badge--neutral">
+                    {{ frequencyLabels[row.frequency] }}
+                  </span>
+                } @else {
+                  —
+                }
+              </td>
+              <td>
+                <span [class]="activeBadgeClass(row.activeState)">
+                  {{ row.activeState ? activeStateLabels[row.activeState] : '—' }}
+                </span>
+              </td>
+              <td>{{ row.activeMonths || '—' }}</td>
+              <td class="table__num">
+                @if (row.approxAmountTry != null) {
+                  {{ row.approxAmountTry | currency: 'TRY' : 'symbol' : '1.2-2' : 'tr-TR' }}
+                } @else {
+                  —
+                }
+              </td>
+              <td class="table__email" [title]="contactsSummary(row)">
+                {{ contactsSummary(row) }}
+              </td>
+              <td>
+                {{ row.invoiceSource ? invoiceSourceLabels[row.invoiceSource] : '—' }}
+              </td>
+              <td class="table__notes" [title]="row.notes || ''">
+                {{ row.notes || '—' }}
+              </td>
+              @if (isAdmin()) {
+                <td class="table__actions">
+                  <button
+                    type="button"
+                    class="link-btn"
+                    (click)="openEdit(row)"
+                  >
+                    Düzenle
+                  </button>
+                  <button
+                    type="button"
+                    class="link-btn link-btn--muted"
+                    (click)="toggleActive(row)"
+                  >
+                    {{ row.activeState === 'YES' ? 'Pasifleştir' : 'Aktifleştir' }}
+                  </button>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+<!-- Ekle / Düzenle modal -->
+@if (modalOpen()) {
+  <div class="modal-overlay" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <header class="modal__head">
+        <h3 class="modal__title">
+          {{ editingId() ? 'Servisi Düzenle' : 'Yeni Servis' }}
+        </h3>
+        <button type="button" class="modal__close" (click)="closeModal()">
+          ×
+        </button>
+      </header>
+
+      <form [formGroup]="form" (ngSubmit)="save()" class="modal__body">
+        <div class="form-grid">
+          <label class="field">
+            <span class="field__label">Hizmet *</span>
+            <input class="field__input" type="text" formControlName="name" />
+            @if (form.get('name')?.touched && form.get('name')?.invalid) {
+              <span class="field__error">Hizmet adı zorunludur.</span>
+            }
+          </label>
+
+          <label class="field">
+            <span class="field__label">Sağlayıcı</span>
+            <input
+              class="field__input"
+              type="text"
+              formControlName="providerName"
+            />
+          </label>
+
+          <label class="field">
+            <span class="field__label">Kart</span>
+            <select class="field__select" formControlName="cardLast4">
+              <option value="">— Seçilmedi —</option>
+              @for (card of cards(); track card.id) {
+                <option [value]="card.last4">{{ cardLabel(card) }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span class="field__label">Frekans</span>
+            <select class="field__select" formControlName="frequency">
+              @for (opt of frequencyOptions; track opt) {
+                <option [value]="opt">{{ frequencyLabels[opt] }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span class="field__label">Aktiflik</span>
+            <select class="field__select" formControlName="activeState">
+              @for (opt of activeStateOptions; track opt) {
+                <option [value]="opt">{{ activeStateLabels[opt] }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span class="field__label">Yaklaşık Tutar (TL)</span>
+            <input
+              class="field__input"
+              type="number"
+              step="0.01"
+              formControlName="approxAmountTry"
+            />
+          </label>
+
+          <label class="field">
+            <span class="field__label">Fatura Kaynağı</span>
+            <select class="field__select" formControlName="invoiceSource">
+              <option value="">— Seçilmedi —</option>
+              @for (opt of invoiceSourceOptions; track opt) {
+                <option [value]="opt">{{ invoiceSourceLabels[opt] }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span class="field__label">Aktif Aylar</span>
+            <input
+              class="field__input"
+              type="text"
+              placeholder="2026-01, 2026-02"
+              formControlName="activeMonths"
+            />
+          </label>
+
+          <label class="field field--full">
+            <span class="field__label">Amaç</span>
+            <input class="field__input" type="text" formControlName="purpose" />
+          </label>
+
+          <label class="field field--full">
+            <span class="field__label">Notlar</span>
+            <textarea
+              class="field__input field__textarea"
+              rows="2"
+              formControlName="notes"
+            ></textarea>
+          </label>
+        </div>
+
+        <!-- Fatura iletişim (contacts) -->
+        <div class="contacts" formArrayName="contacts">
+          <div class="contacts__head">
+            <span class="field__label">Fatura E-posta(ları) *</span>
+            <button
+              type="button"
+              class="link-btn"
+              (click)="addContact()"
+            >
+              + Ekle
+            </button>
+          </div>
+
+          @for (group of contacts.controls; track $index) {
+            <div class="contact-row" [formGroupName]="$index">
+              <div class="contact-row__email">
+                <input
+                  class="field__input"
+                  type="text"
+                  placeholder="ad@firma.com, ad2@firma.com"
+                  formControlName="email"
+                />
+                @if (
+                  group.get('email')?.touched && group.get('email')?.invalid
+                ) {
+                  <span class="field__error">
+                    Geçerli e-posta girin (virgülle birden çok adres olabilir).
+                  </span>
+                }
+              </div>
+              <input
+                class="field__input contact-row__source"
+                type="text"
+                placeholder="Kaynak"
+                formControlName="source"
+              />
+              <label class="contact-row__primary">
+                <input type="checkbox" formControlName="primary" />
+                <span>Birincil</span>
+              </label>
+              <button
+                type="button"
+                class="link-btn link-btn--danger"
+                (click)="removeContact($index)"
+                [disabled]="contacts.length <= 1"
+              >
+                Sil
+              </button>
+            </div>
+          }
+        </div>
+
+        @if (saveError()) {
+          <p class="modal__error">{{ saveError() }}</p>
+        }
+
+        <footer class="modal__foot">
+          <button type="button" class="btn btn--ghost" (click)="closeModal()">
+            İptal
+          </button>
+          <button
+            type="submit"
+            class="btn btn--primary"
+            [disabled]="saving()"
+          >
+            {{ saving() ? 'Kaydediliyor…' : 'Kaydet' }}
+          </button>
+        </footer>
+      </form>
+    </div>
+  </div>
+}
