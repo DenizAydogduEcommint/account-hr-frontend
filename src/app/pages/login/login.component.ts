@@ -50,13 +50,17 @@ export class LoginComponent {
 
     this.auth.login(email, password).subscribe({
       next: () => {
+        // Rol bazlı varsayılan açılış (E3-08): returnUrl yoksa kullanıcının
+        // rolüne uygun ekrana (homeRoute) git — ACCOUNTING → eksik faturalar,
+        // ADMIN/TEAM_MEMBER → dashboard. Böylece hiçbir rol yasak ekrana düşmez.
+        const fallback = this.auth.homeRoute();
         // Açık yönlendirme (open redirect) koruması: yalnızca uygulama-içi
         // mutlak path'lere izin ver. Mutlak URL (http://...) ve protokol-bağımsız
         // (//evil.com) hedefleri reddet → kimlik avı/dış yönlendirme engellenir.
         const raw =
-          this.route.snapshot.queryParamMap.get('returnUrl') ?? '/dashboard';
+          this.route.snapshot.queryParamMap.get('returnUrl') ?? fallback;
         const returnUrl =
-          raw.startsWith('/') && !raw.startsWith('//') ? raw : '/dashboard';
+          raw.startsWith('/') && !raw.startsWith('//') ? raw : fallback;
         void this.router.navigateByUrl(returnUrl);
       },
       error: (err) => {

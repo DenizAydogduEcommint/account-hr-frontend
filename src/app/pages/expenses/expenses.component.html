@@ -302,35 +302,41 @@
               <div class="status-change__current">
                 <app-status-badge [status]="row.invoiceStatus" />
               </div>
-              <div class="status-change__control">
-                <select
-                  class="field__select status-change__select"
-                  [value]="pendingStatus() ?? ''"
-                  [disabled]="statusSaving()"
-                  (change)="onPendingStatusChange($event)"
-                >
-                  @for (opt of statusChangeOptions; track opt) {
-                    <option [value]="opt">{{ statusLabels[opt] }}</option>
-                  }
-                </select>
-                <span
-                  class="status-change__swatch"
-                  [style.background-color]="
-                    pendingStatus() ? statusColors[pendingStatus()!] : '#efefef'
-                  "
-                  aria-hidden="true"
-                ></span>
-                <button
-                  type="button"
-                  class="btn btn--primary btn--sm"
-                  [disabled]="!statusChanged() || statusSaving()"
-                  (click)="saveStatus()"
-                >
-                  {{ statusSaving() ? 'Kaydediliyor…' : 'Durumu Kaydet' }}
-                </button>
-              </div>
-              @if (statusError()) {
-                <p class="status-change__error">{{ statusError() }}</p>
+              <!-- Durum değiştir kontrolü yalnızca ADMIN/ACCOUNTING için (E3-08).
+                   TEAM_MEMBER salt-okunur rozeti görür; PATCH yapamaz. -->
+              @if (canChangeStatus()) {
+                <div class="status-change__control">
+                  <select
+                    class="field__select status-change__select"
+                    [value]="pendingStatus() ?? ''"
+                    [disabled]="statusSaving()"
+                    (change)="onPendingStatusChange($event)"
+                  >
+                    @for (opt of statusChangeOptions; track opt) {
+                      <option [value]="opt">{{ statusLabels[opt] }}</option>
+                    }
+                  </select>
+                  <span
+                    class="status-change__swatch"
+                    [style.background-color]="
+                      pendingStatus()
+                        ? statusColors[pendingStatus()!]
+                        : '#efefef'
+                    "
+                    aria-hidden="true"
+                  ></span>
+                  <button
+                    type="button"
+                    class="btn btn--primary btn--sm"
+                    [disabled]="!statusChanged() || statusSaving()"
+                    (click)="saveStatus()"
+                  >
+                    {{ statusSaving() ? 'Kaydediliyor…' : 'Durumu Kaydet' }}
+                  </button>
+                </div>
+                @if (statusError()) {
+                  <p class="status-change__error">{{ statusError() }}</p>
+                }
               }
             </dd>
           </div>

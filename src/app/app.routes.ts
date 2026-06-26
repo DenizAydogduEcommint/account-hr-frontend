@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { authGuard } from './core/auth/auth.guard';
+import { authGuard, landingGuard, roleGuard } from './core/auth/auth.guard';
 import { LayoutComponent } from './layout/layout.component';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { LoginComponent } from './pages/login/login.component';
@@ -15,10 +15,23 @@ export const routes: Routes = [
     component: LayoutComponent,
     canActivate: [authGuard],
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      // İndeks: role göre açılış ekranına yönlendir (E3-08).
+      // landingGuard her zaman UrlTree döndürür; aşağıdaki redirectTo yalnızca
+      // tip gereği bir hedef sağlar (guard'ın UrlTree'si önce devreye girer).
+      {
+        path: '',
+        canActivate: [landingGuard],
+        pathMatch: 'full',
+        redirectTo: 'dashboard',
+      },
       { path: 'dashboard', component: DashboardComponent },
       {
+        // Servisler ekranı 3 rol de okuyabilir (E3-08; backend GET /services
+        // hasAnyRole ADMIN/ACCOUNTING/TEAM_MEMBER). Yazma aksiyonları
+        // (oluştur/düzenle/aktiflik) ServicesComponent'te yalnızca ADMIN'e
+        // görünür; backend yazmada ADMIN-only enforce eder.
         path: 'services',
+        canActivate: [roleGuard(['ADMIN', 'ACCOUNTING', 'TEAM_MEMBER'])],
         loadComponent: () =>
           import('./pages/services/services.component').then(
             (m) => m.ServicesComponent,
@@ -38,9 +51,18 @@ export const routes: Routes = [
             (m) => m.MissingInvoicesComponent,
           ),
       },
+      {
+        // 403 — erişim yok (rol guard yönlendirmesi). Oturum içi kabukta kalır.
+        path: '403',
+        loadComponent: () =>
+          import('./pages/forbidden/forbidden.component').then(
+            (m) => m.ForbiddenComponent,
+          ),
+      },
     ],
   },
 
-  // Bilinmeyen route → dashboard'a (oturum yoksa guard login'e atar).
-  { path: '**', redirectTo: 'dashboard' },
+  // Bilinmeyen route → indeks (landingGuard role uygun ekrana atar; oturum
+  // yoksa authGuard login'e yönlendirir).
+  { path: '**', redirectTo: '' },
 ];

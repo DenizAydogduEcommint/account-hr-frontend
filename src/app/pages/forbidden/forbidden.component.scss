@@ -1,0 +1,78 @@
+@use 'styles/tokens' as *;
+
+// 403 — erişim yok ekranı. state-box deseni dashboard ile aynı, btn expenses ile aynı.
+.forbidden {
+  display: flex;
+  justify-content: center;
+  padding: $space-5 $space-3;
+}
+
+.state-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  background: $ec-bg;
+  border: 1px solid $ec-border;
+  border-radius: $radius-card;
+  box-shadow: $shadow-sm;
+  padding: $space-6 $space-4;
+  max-width: 480px;
+
+  &__icon {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: $ec-gray-1;
+    color: rgba(34, 34, 34, 0.5);
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: $ec-text;
+  }
+
+  &__text {
+    margin: 0 0 $space-2;
+    font-size: 14px;
+    color: rgba(34, 34, 34, 0.6);
+  }
+
+  &--error &__icon {
+    background: rgba(255, 68, 68, 0.12);
+    color: $status-expected;
+  }
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 18px;
+  border: none;
+  border-radius: $radius-input;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &--primary {
+    background: $ec-primary;
+    color: #fff;
+
+    &:hover {
+      background: $ec-primary-dark;
+    }
+  }
+}

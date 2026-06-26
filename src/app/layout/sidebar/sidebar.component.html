@@ -5,7 +5,7 @@
   </div>
 
   <nav class="nav">
-    @for (item of nav; track item.label) {
+    @for (item of nav(); track item.label) {
       @if (item.path) {
         <!-- Gerçek route (routerLink + aktif vurgu) -->
         <a

@@ -9,6 +9,7 @@ import {
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
+import { AuthService } from '../../core/auth/auth.service';
 import { MonthSelectorComponent } from '../../shared/month-selector/month-selector.component';
 import { DEFAULT_MONTH } from '../../shared/default-month';
 import { ExpenseCreateModalComponent } from '../../shared/expense-create/expense-create-modal.component';
@@ -55,6 +56,17 @@ const PAGE_SIZE = 50;
 })
 export class ExpensesComponent implements OnInit, OnDestroy {
   private readonly service = inject(ExpensesService);
+  private readonly auth = inject(AuthService);
+
+  /**
+   * Durum değiştirme (PATCH status, E3-07) yetkisi var mı? (E3-08)
+   * ADMIN + ACCOUNTING değiştirebilir; TEAM_MEMBER için kontrol gizlenir.
+   * Backend gerçek kapıdır — bu yalnızca UI gizlemesidir; 403 gelirse
+   * mevcut hata akışı (statusError) zaten zarifçe gösterir.
+   */
+  readonly canChangeStatus = computed(() =>
+    this.auth.hasAnyRole('ADMIN', 'ACCOUNTING'),
+  );
 
   // ---- Liste durumu ------------------------------------------------------
   readonly data = signal<ExpenseListResponse | null>(null);

@@ -10,7 +10,28 @@ import {
   LoginRequest,
   LogoutRequest,
   RefreshRequest,
+  UserRole,
 } from './auth.models';
+
+/**
+ * Rol bazlı varsayılan açılış (landing) route'ları — E3-08.
+ *
+ * Her rol giriş sonrası / `/` ziyaretinde kendisine uygun, asla yasak olmayan
+ * bir ekrana düşer:
+ *  - ADMIN        → /dashboard (her şeye erişimi var)
+ *  - ACCOUNTING   → /missing-invoices (muhasebe odağı: eksik faturalar takibi)
+ *  - TEAM_MEMBER  → /dashboard (genel bakış; servis yönetimi yok)
+ *
+ * Backend gerçek yetki kapısıdır; bu yalnızca UX yönlendirmesidir.
+ */
+export const ROLE_HOME_ROUTE: Record<UserRole, string> = {
+  ADMIN: '/dashboard',
+  ACCOUNTING: '/missing-invoices',
+  TEAM_MEMBER: '/dashboard',
+};
+
+/** Oturum yokken (rol bilinmiyorken) güvenli varsayılan açılış. */
+const DEFAULT_HOME_ROUTE = '/dashboard';
 
 const ACCESS_TOKEN_KEY = 'ah_access_token';
 const REFRESH_TOKEN_KEY = 'ah_refresh_token';
@@ -34,6 +55,37 @@ export class AuthService {
 
   /** Şablonlarda kolay kullanım için: oturum açık mı? */
   readonly isLoggedIn = computed(() => this._currentUser() !== null);
+
+  /**
+   * Giriş yapan kullanıcının rolü; oturum yoksa null (E3-08).
+   * Menü filtreleme, guard ve aksiyon gizleme bunun türevlerini kullanır.
+   */
+  readonly role = computed<UserRole | null>(
+    () => this._currentUser()?.role ?? null,
+  );
+
+  /**
+   * Rol bazlı açılış route'u (computed signal). Giriş sonrası ve `/` ziyaretinde
+   * kullanılır. Oturum yoksa güvenli varsayılan döner.
+   */
+  readonly homeRoute = computed<string>(() => {
+    const r = this.role();
+    return r ? ROLE_HOME_ROUTE[r] : DEFAULT_HOME_ROUTE;
+  });
+
+  /**
+   * Kullanıcının rolü verilenlerden biri mi? (UI gösterme/gizleme için —
+   * backend gerçek yetki kapısıdır.) Tek rol modeli: kullanıcıda tek `role`.
+   */
+  hasRole(...roles: UserRole[]): boolean {
+    const r = this.role();
+    return r !== null && roles.includes(r);
+  }
+
+  /** {@link hasRole} ile aynı anlamda okunabilir alias (çoklu rol vurgusu). */
+  hasAnyRole(...roles: UserRole[]): boolean {
+    return this.hasRole(...roles);
+  }
 
   /** Devam eden tek refresh çağrısı; eşzamanlı 401'ler bunu paylaşır. */
   private refresh$: Observable<AuthResponse> | null = null;
