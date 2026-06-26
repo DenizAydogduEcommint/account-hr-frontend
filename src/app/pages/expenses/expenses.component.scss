@@ -449,6 +449,44 @@
   }
 }
 
+// ---- Durum değiştir (E3-07) ----------------------------------------------
+.status-change {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+
+  &__current {
+    display: flex;
+  }
+
+  &__control {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    flex-wrap: wrap;
+  }
+
+  &__select {
+    min-width: 180px;
+  }
+
+  &__swatch {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid $ec-border;
+    flex: 0 0 auto;
+  }
+
+  &__error {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: $status-expected;
+  }
+}
+
 @media (max-width: 768px) {
   .detail-grid {
     grid-template-columns: 1fr;

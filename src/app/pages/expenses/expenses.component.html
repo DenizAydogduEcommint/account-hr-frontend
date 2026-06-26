@@ -243,7 +243,7 @@
   }
 </section>
 
-<!-- Detay modalı (salt-okunur — durum değiştir / fatura ekle E3-05/E3-07) -->
+<!-- Detay modalı (durum değiştir E3-07 inline; fatura ekle E3-05) -->
 @if (selectedRow(); as row) {
   <div class="modal-overlay" (click)="closeDetail()">
     <div class="modal" (click)="$event.stopPropagation()">
@@ -296,9 +296,43 @@
             <dt>Muhasebe E-posta</dt>
             <dd>{{ row.accountingEmail || '—' }}</dd>
           </div>
-          <div class="detail-grid__item">
+          <div class="detail-grid__item detail-grid__item--full">
             <dt>Fatura Durumu</dt>
-            <dd><app-status-badge [status]="row.invoiceStatus" /></dd>
+            <dd class="status-change">
+              <div class="status-change__current">
+                <app-status-badge [status]="row.invoiceStatus" />
+              </div>
+              <div class="status-change__control">
+                <select
+                  class="field__select status-change__select"
+                  [value]="pendingStatus() ?? ''"
+                  [disabled]="statusSaving()"
+                  (change)="onPendingStatusChange($event)"
+                >
+                  @for (opt of statusChangeOptions; track opt) {
+                    <option [value]="opt">{{ statusLabels[opt] }}</option>
+                  }
+                </select>
+                <span
+                  class="status-change__swatch"
+                  [style.background-color]="
+                    pendingStatus() ? statusColors[pendingStatus()!] : '#efefef'
+                  "
+                  aria-hidden="true"
+                ></span>
+                <button
+                  type="button"
+                  class="btn btn--primary btn--sm"
+                  [disabled]="!statusChanged() || statusSaving()"
+                  (click)="saveStatus()"
+                >
+                  {{ statusSaving() ? 'Kaydediliyor…' : 'Durumu Kaydet' }}
+                </button>
+              </div>
+              @if (statusError()) {
+                <p class="status-change__error">{{ statusError() }}</p>
+              }
+            </dd>
           </div>
           <div class="detail-grid__item detail-grid__item--full">
             <dt>Fatura Notu</dt>

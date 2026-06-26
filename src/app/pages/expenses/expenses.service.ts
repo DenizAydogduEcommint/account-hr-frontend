@@ -68,4 +68,18 @@ export class ExpensesService {
   createExpense(req: ExpenseCreateRequest): Observable<ExpenseRow> {
     return this.http.post<ExpenseRow>(`${this.baseUrl}/expenses`, req);
   }
+
+  /**
+   * Tek satırın fatura durumunu değiştirir (E3-07).
+   * PATCH /expenses/{id}/status body {@code { status }}.
+   * Güncellenmiş satırı (liste GET ile aynı şekil) döndürür — yeni
+   * {@code invoiceStatus} + {@code invoiceColorHex} dahil. 400/404 standart
+   * ErrorResponse ile döner.
+   */
+  updateStatus(id: number, status: InvoiceStatus): Observable<ExpenseRow> {
+    return this.http.patch<ExpenseRow>(
+      `${this.baseUrl}/expenses/${id}/status`,
+      { status },
+    );
+  }
 }

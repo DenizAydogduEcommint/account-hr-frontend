@@ -15,7 +15,9 @@ import { ExpenseCreateModalComponent } from '../../shared/expense-create/expense
 import { StatusBadgeComponent } from '../../shared/status-badge/status-badge.component';
 import {
   InvoiceStatus,
+  STATUS_COLORS,
   STATUS_LABELS_TR,
+  STATUS_ORDER,
 } from '../../shared/status-colors';
 import {
   CardRef,
@@ -70,6 +72,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   private searchSub?: Subscription;
   private listSub?: Subscription;
   private cardsSub?: Subscription;
+  private statusSub?: Subscription;
 
   // ---- Referans veri -----------------------------------------------------
   readonly cards = signal<CardRef[]>([]);
@@ -77,6 +80,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   // ---- Sabit seçenekler / etiketler --------------------------------------
   readonly statusOptions = STATUS_FILTER_OPTIONS;
   readonly statusLabels = STATUS_LABELS_TR;
+  readonly statusColors = STATUS_COLORS;
+
+  /** Durum değiştir dropdown'unun 5 seçeneği (sabit sıra, tek kaynak). */
+  readonly statusChangeOptions = STATUS_ORDER;
 
   // ---- Türetilmiş ---------------------------------------------------------
   readonly mainRows = computed<ExpenseRow[]>(
@@ -102,6 +109,21 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   // ---- Detay modalı -------------------------------------------------------
   readonly selectedRow = signal<ExpenseRow | null>(null);
 
+  // ---- Durum değiştir (E3-07) --------------------------------------------
+  /** Dropdown'da seçili (henüz kaydedilmemiş) durum. */
+  readonly pendingStatus = signal<InvoiceStatus | null>(null);
+  /** PATCH devam ediyor mu (buton/dropdown disabled + pending metin). */
+  readonly statusSaving = signal(false);
+  /** Inline hata mesajı (400/404 vb.); başarıda temizlenir. */
+  readonly statusError = signal<string | null>(null);
+
+  /** Seçili durum, satırın mevcut durumundan farklıysa kaydet aktif. */
+  readonly statusChanged = computed(() => {
+    const row = this.selectedRow();
+    const pending = this.pendingStatus();
+    return row != null && pending != null && pending !== row.invoiceStatus;
+  });
+
   // ---- Yeni satır ekle modalı (E3-06) ------------------------------------
   readonly createOpen = signal(false);
 
@@ -125,7 +147,11 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   }
 
   // ---- Veri çekme --------------------------------------------------------
-  private fetch(): void {
+  /**
+   * Mevcut filtre/sayfa için listeyi çeker. {@link onLoaded} verilirse başarılı
+   * yanıttan sonra çalışır (ör. açık modalı taze veriyle yeniden eşitlemek için).
+   */
+  private fetch(onLoaded?: (res: ExpenseListResponse) => void): void {
     this.listSub?.unsubscribe();
     this.loading.set(true);
     this.error.set(false);
@@ -144,6 +170,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
         next: (res) => {
           this.data.set(res);
           this.loading.set(false);
+          onLoaded?.(res);
         },
         error: () => {
           this.error.set(true);
@@ -202,10 +229,82 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   // ---- Detay modalı ------------------------------------------------------
   openDetail(row: ExpenseRow): void {
     this.selectedRow.set(row);
+    this.pendingStatus.set(row.invoiceStatus);
+    this.statusError.set(null);
+    this.statusSaving.set(false);
   }
 
   closeDetail(): void {
+    if (this.statusSaving()) {
+      return;
+    }
     this.selectedRow.set(null);
+    this.pendingStatus.set(null);
+    this.statusError.set(null);
+  }
+
+  // ---- Durum değiştir (E3-07) --------------------------------------------
+  /** Dropdown seçimi → bekleyen durumu güncelle (henüz kaydetmez). */
+  onPendingStatusChange(event: Event): void {
+    this.statusError.set(null);
+    this.pendingStatus.set(
+      (event.target as HTMLSelectElement).value as InvoiceStatus,
+    );
+  }
+
+  /**
+   * Seçili durumu kaydet: PATCH → başarıda modalı kapat ve mevcut ayın
+   * listesini + toplamlarını yeniden çek (rozet yeni renkle render olur).
+   * 400/404 inline {@link statusError} olarak gösterilir.
+   */
+  saveStatus(): void {
+    const row = this.selectedRow();
+    const next = this.pendingStatus();
+    if (!row || next == null || next === row.invoiceStatus) {
+      return;
+    }
+
+    this.statusSub?.unsubscribe();
+    this.statusSaving.set(true);
+    this.statusError.set(null);
+
+    this.statusSub = this.service.updateStatus(row.id, next).subscribe({
+      next: () => {
+        this.statusSaving.set(false);
+        // Modalı kapat + mevcut ay listesini/toplamlarını yenile.
+        this.selectedRow.set(null);
+        this.pendingStatus.set(null);
+        this.fetch();
+      },
+      error: (err: { status?: number }) => {
+        this.statusSaving.set(false);
+
+        if (err?.status === 404) {
+          // Satır artık yok (başka oturum sildi/değiştirdi): modalı kapat ki
+          // bayat rozet kaybolsun, ardından listeyi tazele.
+          this.statusError.set('Satır bulunamadı. Liste güncel olmayabilir.');
+          this.selectedRow.set(null);
+          this.pendingStatus.set(null);
+          this.fetch();
+          return;
+        }
+
+        // Diğer hatalar (400/ağ): modal açık kalsın (kullanıcı tekrar deneyebilir),
+        // ama listeyi sunucu gerçeğiyle tazele ve modal görünümünü taze satırla
+        // yeniden eşitle (rozet açılışta yakalanan bayat satırı değil, canlı durumu
+        // göstersin). Satır artık listede yoksa modalı kapat.
+        this.statusError.set('Durum güncellenemedi. Lütfen tekrar deneyin.');
+        const editingId = row.id;
+        this.fetch((res) => {
+          const fresh =
+            res.main.content.find((r) => r.id === editingId) ??
+            res.informationalRows.find((r) => r.id === editingId) ??
+            null;
+          this.selectedRow.set(fresh);
+          this.pendingStatus.set(fresh ? fresh.invoiceStatus : null);
+        });
+      },
+    });
   }
 
   // ---- Yeni satır ekle modalı (E3-06) ------------------------------------
@@ -259,5 +358,6 @@ export class ExpensesComponent implements OnInit, OnDestroy {
     this.searchSub?.unsubscribe();
     this.listSub?.unsubscribe();
     this.cardsSub?.unsubscribe();
+    this.statusSub?.unsubscribe();
   }
 }
