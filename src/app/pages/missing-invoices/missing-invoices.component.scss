@@ -63,6 +63,15 @@
     font-weight: 600;
     color: $ec-text;
   }
+
+  // Yaklaşık toplam — sağa yaslı (E3-10). "~" tahmini işaretler.
+  &__total {
+    margin-left: auto;
+    font-size: 15px;
+    font-weight: 700;
+    color: $status-expected;
+    white-space: nowrap;
+  }
 }
 
 // ---- Başarı bildirimi (yükleme sonrası) ----------------------------------
@@ -145,6 +154,15 @@
 
   &__num {
     text-align: right;
+    white-space: nowrap;
+  }
+
+  // Toplam satırı (tfoot) — E3-10 yaklaşık toplam.
+  tfoot &__total-row td {
+    padding: 14px 12px;
+    border-top: 2px solid $ec-border;
+    background: $ec-gray-2;
+    color: $ec-text;
     white-space: nowrap;
   }
 

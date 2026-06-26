@@ -34,3 +34,18 @@ export interface MissingInvoiceRow {
   /** Servisin herhangi bir harcamada en son görüldüğü ay ("YYYY-MM"); hiç yoksa null. */
   lastSeenMonth: string | null;
 }
+
+/**
+ * E3-10 wrapper yanıt. Backend artık çıplak liste yerine sayım + yaklaşık TL
+ * toplamı ile sarmalanmış yanıt döner:
+ *   GET /api/v1/missing-invoices?month=YYYY-MM → MissingInvoiceListResponse
+ *
+ * Geriye dönük: yanıt hâlâ çıplak dizi gelirse servis bunu `items` say + toplamı
+ * `approxAmountTry`'lerden hesaplar (defensive).
+ */
+export interface MissingInvoiceListResponse {
+  items: MissingInvoiceRow[];
+  count: number;
+  /** Eksik faturaların yaklaşık TL toplamı; null/eksik → 0 say. */
+  approxTotalTry: number;
+}

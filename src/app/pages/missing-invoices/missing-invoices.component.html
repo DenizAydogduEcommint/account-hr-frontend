@@ -55,11 +55,14 @@
       </p>
     </div>
   } @else {
-    <!-- Belirgin sayaç -->
+    <!-- Belirgin sayaç + yaklaşık toplam (E3-10) -->
     <div class="count-banner">
       <span class="count-banner__num">{{ missingCount() }}</span>
       <span class="count-banner__text">
         Bu ay {{ missingCount() }} servisin faturası eksik
+      </span>
+      <span class="count-banner__total">
+        Toplam yaklaşık tutar: ~{{ formatTry(approxTotalTry()) }}
       </span>
     </div>
 
@@ -116,6 +119,15 @@
             </tr>
           }
         </tbody>
+        <tfoot>
+          <tr class="table__total-row">
+            <td class="table__strong" colspan="4">Toplam yaklaşık tutar</td>
+            <td class="table__num table__strong">
+              ~{{ formatTry(approxTotalTry()) }}
+            </td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
       </table>
     </div>
   }

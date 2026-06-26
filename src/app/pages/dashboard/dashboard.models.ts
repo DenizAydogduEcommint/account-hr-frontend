@@ -24,6 +24,8 @@ export interface DashboardSummary {
   totalTry: number;
   statusCounts: StatusCount[];
   missingCount: number;
+  /** Eksik faturaların yaklaşık TL toplamı (E3-10). Backend vermezse 0 say. */
+  missingTotalTry: number;
   foundCount: number;
   investigateCount: number;
   expenseCount: number;

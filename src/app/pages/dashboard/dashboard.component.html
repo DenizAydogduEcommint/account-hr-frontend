@@ -54,6 +54,7 @@
       <div class="kpi-card kpi-card--red">
         <span class="kpi-card__label">Eksik Fatura</span>
         <span class="kpi-card__value">{{ s.missingCount }}</span>
+        <span class="kpi-card__sub">{{ formatMissingTotal(s.missingTotalTry) }}</span>
       </div>
 
       <div class="kpi-card kpi-card--green">

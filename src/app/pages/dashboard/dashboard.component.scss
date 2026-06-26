@@ -63,6 +63,14 @@
     color: $ec-text;
   }
 
+  // Yaklaşık tutar alt satırı (E3-10) — "~#.##0,00 ₺", tahmini olduğu için soluk.
+  &__sub {
+    margin-top: -4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(34, 34, 34, 0.6);
+  }
+
   // Vurgu renkleri (status renk kaynağıyla aynı).
   &--red {
     border-left-color: $status-expected;

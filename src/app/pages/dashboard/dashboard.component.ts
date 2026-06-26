@@ -128,6 +128,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
     };
   });
 
+  /**
+   * Eksik faturaların yaklaşık TL toplamı, "~#.##0,00 ₺" (tr-TR) biçiminde (E3-10).
+   * Backend alanı vermezse 0 say → "~0,00 ₺". `~` tahmini işaretler.
+   */
+  formatMissingTotal(value: number | null | undefined): string {
+    const n = value ?? 0;
+    const formatted = n.toLocaleString('tr-TR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    return `~${formatted} ₺`;
+  }
+
   ngOnInit(): void {
     this.fetch(this.month());
   }

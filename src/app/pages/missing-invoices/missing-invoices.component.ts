@@ -43,6 +43,8 @@ export class MissingInvoicesComponent implements OnInit, OnDestroy {
 
   // ---- Durum -------------------------------------------------------------
   readonly rows = signal<MissingInvoiceRow[]>([]);
+  /** Eksik faturaların yaklaşık TL toplamı (E3-10). */
+  readonly approxTotalTry = signal(0);
   readonly loading = signal(false);
   readonly error = signal(false);
   readonly month = signal(DEFAULT_MONTH);
@@ -72,12 +74,14 @@ export class MissingInvoicesComponent implements OnInit, OnDestroy {
     this.error.set(false);
 
     this.listSub = this.service.list(this.month()).subscribe({
-      next: (rows) => {
-        this.rows.set(rows);
+      next: (resp) => {
+        this.rows.set(resp.items);
+        this.approxTotalTry.set(resp.approxTotalTry);
         this.loading.set(false);
       },
       error: () => {
         this.rows.set([]);
+        this.approxTotalTry.set(0);
         this.error.set(true);
         this.loading.set(false);
       },
