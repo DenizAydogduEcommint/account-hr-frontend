@@ -68,6 +68,7 @@ export class ServicesComponent implements OnInit, OnDestroy {
   private searchSub?: Subscription;
   private listSub?: Subscription;
   private saveSub?: Subscription;
+  private cardsSub?: Subscription;
 
   // ---- Referans veri -----------------------------------------------------
   readonly cards = signal<CardRef[]>([]);
@@ -110,7 +111,7 @@ export class ServicesComponent implements OnInit, OnDestroy {
       .pipe(debounceTime(350), distinctUntilChanged())
       .subscribe(() => this.fetch());
 
-    this.service.cards().subscribe({
+    this.cardsSub = this.service.cards().subscribe({
       next: (c) => this.cards.set(c),
       error: () => this.cards.set([]),
     });
@@ -320,5 +321,6 @@ export class ServicesComponent implements OnInit, OnDestroy {
     this.searchSub?.unsubscribe();
     this.listSub?.unsubscribe();
     this.saveSub?.unsubscribe();
+    this.cardsSub?.unsubscribe();
   }
 }

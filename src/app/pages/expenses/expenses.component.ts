@@ -64,6 +64,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   private readonly search$ = new Subject<string>();
   private searchSub?: Subscription;
   private listSub?: Subscription;
+  private cardsSub?: Subscription;
 
   // ---- Referans veri -----------------------------------------------------
   readonly cards = signal<CardRef[]>([]);
@@ -104,7 +105,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
         this.fetch();
       });
 
-    this.service.cards().subscribe({
+    this.cardsSub = this.service.cards().subscribe({
       next: (c) => this.cards.set(c),
       error: () => this.cards.set([]),
     });
@@ -230,5 +231,6 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.searchSub?.unsubscribe();
     this.listSub?.unsubscribe();
+    this.cardsSub?.unsubscribe();
   }
 }

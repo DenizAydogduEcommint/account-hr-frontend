@@ -53,9 +53,18 @@ export class AuthService {
     return this.accessToken !== null;
   }
 
-  /** Şu an kimliği doğrulanmış sayılır mı? Guard tarafından kullanılır. */
+  /**
+   * Şu an kimliği doğrulanmış sayılır mı? Guard tarafından kullanılır.
+   *
+   * Yalnızca localStorage'da token bulunması YETMEZ — çözümlenmiş kullanıcı da
+   * gerekir. Açılışta APP_INITIALIZER `restoreSession()`'ı (loadMe) bekler;
+   * geçerli token kullanıcıyı doldurur, süresi dolmuş/bozuk token ise /auth/me
+   * 401/403 ile başarısız olup oturumu temizler → `currentUser()` null kalır ve
+   * guard login'e yönlendirir. Böylece "token var ama kullanıcı yok" durumu
+   * yanlışlıkla yetkili sayılmaz.
+   */
   isAuthenticated(): boolean {
-    return this.hasToken();
+    return this._currentUser() !== null;
   }
 
   /** POST /auth/login — başarılı olursa token'ları saklar ve kullanıcıyı yayınlar. */
@@ -90,9 +99,11 @@ export class AuthService {
       .pipe(
         tap((res) => this.applyAuthResponse(res)),
         // shareReplay önce: tüm eşzamanlı abonelere tek sonucu yayınlar.
-        // finalize sonra: multicast tamamen bitince refresh$ temizlenir, böylece
-        // sonuç yayınlanmadan refresh$ erkenden null'a düşüp tekrar refresh tetiklenmez.
-        shareReplay(1),
+        // refCount:true → son abone ayrılınca kaynak tamamlanır ve finalize
+        // tetiklenir, böylece refresh$ null'a döner. (Varsayılan refCount:false
+        // olsaydı finalize hiç çalışmaz, refresh$ asla temizlenmez ve sonraki
+        // her refresh bayatlamış yanıtı geri verirdi.)
+        shareReplay({ bufferSize: 1, refCount: true }),
         finalize(() => {
           this.refresh$ = null;
         }),

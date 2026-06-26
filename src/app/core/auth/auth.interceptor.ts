@@ -56,18 +56,19 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authedReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      // Zaten bir kez retry edilmiş istek yine 401 aldıysa tekrar refresh
-      // deneme — döngüyü kır, oturumu kapat ve hatayı propagate et.
-      if (error.status === 401 && req.context.get(RETRIED)) {
-        auth.clearSession();
-        void router.navigate(['/login']);
+      // Sentinel'i GÖNDERİLEN isteğin context'inden oku (`authedReq`), orijinal
+      // `req`'ten değil. `handle401` retry'ı RETRIED=true ile işaretlediği için
+      // retry edilmiş bir istek yeniden 401 alırsa burada refresh DENENMEZ →
+      // sonsuz refresh/retry döngüsü kırılır. (Logout, retry'ın kendi inner
+      // catchError'ında yapılır.)
+      if (
+        error.status !== 401 ||
+        authedReq.context.get(RETRIED) ||
+        !auth.refreshToken
+      ) {
         return throwError(() => error);
       }
-      // Sadece 401'de ve token mevcutken (ve henüz retry edilmemişse) yenile.
-      if (error.status === 401 && auth.refreshToken) {
-        return handle401(req, next, auth, router);
-      }
-      return throwError(() => error);
+      return handle401(req, next, auth, router);
     }),
   );
 };
@@ -81,14 +82,24 @@ function handle401(
 ): Observable<HttpEvent<unknown>> {
   return auth.refresh().pipe(
     switchMap((res) => {
-      // Tekrar gönderilen isteği RETRIED ile işaretle; yeniden 401 alırsa
-      // üstteki catchError döngüyü kırar.
+      // Tekrar gönderilen isteği RETRIED ile işaretle; bu istek yeniden 401
+      // alırsa üstteki catchError (authedReq.context üzerinden) döngüyü kırar.
       const retriedReq = withAuthHeader(req, res.accessToken).clone({
         context: req.context.set(RETRIED, true),
       });
-      return next(retriedReq);
+      return next(retriedReq).pipe(
+        catchError((retryError: HttpErrorResponse) => {
+          // Refresh sonrası retry yine başarısız (örn. tekrar 401) → oturumu
+          // kapat ve login'e gönder. Bu istek RETRIED işaretli olduğundan
+          // üstteki catchError yeniden refresh tetiklemez (çift refresh yok).
+          auth.clearSession();
+          void router.navigate(['/login']);
+          return throwError(() => retryError);
+        }),
+      );
     }),
     catchError((refreshError) => {
+      // refresh() çağrısının kendisi başarısız oldu → oturumu kapat.
       auth.clearSession();
       void router.navigate(['/login']);
       return throwError(() => refreshError);

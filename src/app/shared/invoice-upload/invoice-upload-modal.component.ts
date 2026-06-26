@@ -2,18 +2,19 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnDestroy,
   Output,
   computed,
   inject,
   signal,
 } from '@angular/core';
+import { Subscription } from 'rxjs';
 
 import { MonthSelectorComponent } from '../month-selector/month-selector.component';
 import {
   ALLOWED_EXTENSIONS,
   CURRENCY_OPTIONS,
   Currency,
-  InvoiceUploadResponse,
   MAX_FILE_SIZE_BYTES,
 } from './invoice-upload.models';
 import { InvoiceUploadService } from './invoice-upload.service';
@@ -43,8 +44,11 @@ interface QueuedFile {
   templateUrl: './invoice-upload-modal.component.html',
   styleUrl: './invoice-upload-modal.component.scss',
 })
-export class InvoiceUploadModalComponent {
+export class InvoiceUploadModalComponent implements OnDestroy {
   private readonly service = inject(InvoiceUploadService);
+
+  /** Devam eden yükleme aboneliği; bileşen yok edilince iptal edilir. */
+  private uploadSub?: Subscription;
 
   /** Yüklenecek servisin id'si (eksik ekranından ön-dolu). */
   @Input({ required: true }) serviceId!: number;
@@ -56,8 +60,11 @@ export class InvoiceUploadModalComponent {
     this.month.set(value ?? '');
   }
 
-  /** Başarılı yükleme — çağıran listeyi/sayacı yeniler. */
-  @Output() uploaded = new EventEmitter<InvoiceUploadResponse>();
+  /**
+   * Başarılı yükleme — çağıran listeyi/sayacı yeniler. Servis adını yayınlar
+   * (çağıran başarı mesajında kullanır); yükleme yanıtı bileşen içinde kalır.
+   */
+  @Output() uploaded = new EventEmitter<string>();
   /** Modal kapatıldı (iptal ya da başarı sonrası). */
   @Output() closed = new EventEmitter<void>();
 
@@ -182,7 +189,8 @@ export class InvoiceUploadModalComponent {
     this.submitting.set(true);
     this.submitError.set(null);
 
-    this.service
+    this.uploadSub?.unsubscribe();
+    this.uploadSub = this.service
       .upload({
         serviceId: this.serviceId,
         month: this.month(),
@@ -193,9 +201,9 @@ export class InvoiceUploadModalComponent {
         files: this.validFiles().map((q) => q.file),
       })
       .subscribe({
-        next: (res) => {
+        next: () => {
           this.submitting.set(false);
-          this.uploaded.emit(res);
+          this.uploaded.emit(this.serviceName);
         },
         error: (err) => {
           this.submitting.set(false);
@@ -224,6 +232,12 @@ export class InvoiceUploadModalComponent {
   }
 
   // ---- Şablon yardımcıları ----------------------------------------------
+
+  ngOnDestroy(): void {
+    // Devam eden yükleme varsa iptal et → bileşen yok edildikten sonra
+    // sinyal yazımı / event yayını olmasın.
+    this.uploadSub?.unsubscribe();
+  }
 
   /** Byte → okunabilir boyut (KB/MB). */
   formatSize(bytes: number): string {

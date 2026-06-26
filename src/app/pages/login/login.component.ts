@@ -50,8 +50,13 @@ export class LoginComponent {
 
     this.auth.login(email, password).subscribe({
       next: () => {
-        const returnUrl =
+        // Açık yönlendirme (open redirect) koruması: yalnızca uygulama-içi
+        // mutlak path'lere izin ver. Mutlak URL (http://...) ve protokol-bağımsız
+        // (//evil.com) hedefleri reddet → kimlik avı/dış yönlendirme engellenir.
+        const raw =
           this.route.snapshot.queryParamMap.get('returnUrl') ?? '/dashboard';
+        const returnUrl =
+          raw.startsWith('/') && !raw.startsWith('//') ? raw : '/dashboard';
         void this.router.navigateByUrl(returnUrl);
       },
       error: (err) => {
