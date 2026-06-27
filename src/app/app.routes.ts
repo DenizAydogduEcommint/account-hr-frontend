@@ -16,13 +16,15 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       // İndeks: role göre açılış ekranına yönlendir (E3-08).
-      // landingGuard her zaman UrlTree döndürür; aşağıdaki redirectTo yalnızca
-      // tip gereği bir hedef sağlar (guard'ın UrlTree'si önce devreye girer).
+      // landingGuard her zaman bir UrlTree döndürür (ADMIN→dashboard,
+      // ACCOUNTING→missing-invoices, ...), bu yüzden component'e fiilen
+      // ulaşılmaz. Angular bir route'ta redirectTo + canActivate'i birlikte
+      // KABUL ETMEZ (NG04014); o yüzden hedef olarak bir component veririz.
       {
         path: '',
         canActivate: [landingGuard],
         pathMatch: 'full',
-        redirectTo: 'dashboard',
+        component: DashboardComponent,
       },
       { path: 'dashboard', component: DashboardComponent },
       {

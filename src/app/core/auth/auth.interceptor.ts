@@ -6,7 +6,7 @@ import {
   HttpInterceptorFn,
   HttpRequest,
 } from '@angular/common/http';
-import { inject } from '@angular/core';
+import { EnvironmentInjector, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, catchError, switchMap, throwError } from 'rxjs';
 
@@ -44,7 +44,12 @@ function withAuthHeader(req: HttpRequest<unknown>, token: string): HttpRequest<u
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
-  const router = inject(Router);
+  // Router'ı EAGER inject ETME: bootstrap (APP_INITIALIZER → restoreSession)
+  // sırasında bir API isteği bu interceptor'ı tetiklerse, Router henüz hydrate
+  // olmadığından NG0200 (Router için döngüsel bağımlılık) oluşur ve uygulama
+  // açılmaz (beyaz sayfa). Bunun yerine EnvironmentInjector'ı yakalayıp Router'ı
+  // YALNIZCA gerçek 401 yönlendirmesi anında (lazy) çözeriz.
+  const injector = inject(EnvironmentInjector);
 
   // API dışı istekleri (örn. statik dosyalar) olduğu gibi geçir.
   if (!isApiRequest(req.url) || shouldSkip(req.url)) {
@@ -68,7 +73,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       ) {
         return throwError(() => error);
       }
-      return handle401(req, next, auth, router);
+      return handle401(req, next, auth, injector);
     }),
   );
 };
@@ -78,8 +83,13 @@ function handle401(
   req: HttpRequest<unknown>,
   next: HttpHandlerFn,
   auth: AuthService,
-  router: Router,
+  injector: EnvironmentInjector,
 ): Observable<HttpEvent<unknown>> {
+  // Router'ı yalnızca yönlendirme anında (lazy) çöz — bootstrap döngüsünü önler.
+  const redirectToLogin = () => {
+    auth.clearSession();
+    void injector.get(Router).navigate(['/login']);
+  };
   return auth.refresh().pipe(
     switchMap((res) => {
       // Tekrar gönderilen isteği RETRIED ile işaretle; bu istek yeniden 401
@@ -92,16 +102,14 @@ function handle401(
           // Refresh sonrası retry yine başarısız (örn. tekrar 401) → oturumu
           // kapat ve login'e gönder. Bu istek RETRIED işaretli olduğundan
           // üstteki catchError yeniden refresh tetiklemez (çift refresh yok).
-          auth.clearSession();
-          void router.navigate(['/login']);
+          redirectToLogin();
           return throwError(() => retryError);
         }),
       );
     }),
     catchError((refreshError) => {
       // refresh() çağrısının kendisi başarısız oldu → oturumu kapat.
-      auth.clearSession();
-      void router.navigate(['/login']);
+      redirectToLogin();
       return throwError(() => refreshError);
     }),
   );
