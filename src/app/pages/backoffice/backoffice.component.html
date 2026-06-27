@@ -1,0 +1,344 @@
+<section class="backoffice">
+  <app-page-info
+    storageKey="backoffice"
+    title="Kullanıcı Yönetimi"
+    description="Sisteme giriş yapacak kişileri buradan yönetirsin. Sadece yöneticiler bu sayfayı görebilir."
+    [items]="pageInfoItems"
+  />
+
+  <!-- Başlık + aksiyon -->
+  <header class="backoffice__head">
+    <div>
+      <h2 class="backoffice__title">Kullanıcı Yönetimi</h2>
+      <p class="backoffice__subtitle">
+        Sisteme giriş yapan kullanıcıları ekle, yetkilerini ve durumlarını yönet
+      </p>
+    </div>
+    <button type="button" class="btn btn--primary" (click)="openCreate()">
+      + Yeni Kullanıcı
+    </button>
+  </header>
+
+  <!-- Yükleniyor / hata / boş -->
+  @if (loading()) {
+    <div class="table-card">
+      <div class="skeleton skeleton--row"></div>
+      <div class="skeleton skeleton--row"></div>
+      <div class="skeleton skeleton--row"></div>
+    </div>
+  } @else if (error()) {
+    <div class="state-box state-box--error">
+      <div class="state-box__icon">!</div>
+      <p class="state-box__title">Veri yüklenemedi</p>
+      <p class="state-box__text">
+        Sunucuya ulaşılamadı. Lütfen daha sonra tekrar deneyin.
+      </p>
+    </div>
+  } @else if (rows().length === 0) {
+    <div class="state-box state-box--empty">
+      <div class="state-box__icon">∅</div>
+      <p class="state-box__title">Kullanıcı bulunamadı.</p>
+      <p class="state-box__text">İlk kullanıcıyı eklemek için yukarıdaki butonu kullanın.</p>
+    </div>
+  } @else {
+    <div class="table-card">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>E-posta</th>
+            <th>Ad Soyad</th>
+            <th>Yetki</th>
+            <th>Durum</th>
+            <th>Kayıt Tarihi</th>
+            <th class="table__actions">İşlemler</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.id) {
+            <tr>
+              <td class="table__strong">{{ row.email }}</td>
+              <td>{{ row.fullName || '—' }}</td>
+              <td>
+                <span class="badge badge--neutral">{{ roleLabels[row.role] }}</span>
+              </td>
+              <td>
+                <span [class]="activeBadgeClass(row.active)">
+                  {{ row.active ? 'Aktif' : 'Pasif' }}
+                </span>
+              </td>
+              <td>{{ formatDate(row.createdAt) }}</td>
+              <td class="table__actions">
+                <div class="row-actions">
+                  <button
+                    type="button"
+                    class="link-btn"
+                    (click)="openReset(row)"
+                    [disabled]="busyRowId() === row.id"
+                  >
+                    Şifre Sıfırla
+                  </button>
+
+                  <label class="role-select">
+                    <span class="visually-hidden">Yetki değiştir</span>
+                    <select
+                      class="field__select role-select__input"
+                      [value]="row.role"
+                      (change)="onRoleChange(row, $event)"
+                      [disabled]="busyRowId() === row.id"
+                    >
+                      @for (opt of roleOptions; track opt) {
+                        <option [value]="opt">{{ roleLabels[opt] }}</option>
+                      }
+                    </select>
+                  </label>
+
+                  <button
+                    type="button"
+                    class="link-btn link-btn--muted"
+                    (click)="toggleActive(row)"
+                    [disabled]="busyRowId() === row.id"
+                  >
+                    {{ row.active ? 'Pasif Yap' : 'Aktif Yap' }}
+                  </button>
+                </div>
+
+                @if (rowErrorFor(row.id); as msg) {
+                  <p class="row-error">{{ msg }}</p>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+<!-- Yeni kullanıcı modalı -->
+@if (createOpen()) {
+  <div class="modal-overlay" (click)="closeCreate()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <header class="modal__head">
+        <h3 class="modal__title">Yeni Kullanıcı</h3>
+        <button type="button" class="modal__close" (click)="closeCreate()">
+          ×
+        </button>
+      </header>
+
+      <form [formGroup]="createForm" (ngSubmit)="create()" class="modal__body">
+        <div class="form-grid">
+          <label class="field">
+            <span class="field__label">E-posta *</span>
+            <input class="field__input" type="email" formControlName="email" />
+            @if (
+              createForm.get('email')?.touched &&
+              createForm.get('email')?.invalid
+            ) {
+              <span class="field__error">Geçerli bir e-posta adresi girin.</span>
+            }
+          </label>
+
+          <label class="field">
+            <span class="field__label">Ad Soyad *</span>
+            <input class="field__input" type="text" formControlName="fullName" />
+            @if (
+              createForm.get('fullName')?.touched &&
+              createForm.get('fullName')?.invalid
+            ) {
+              <span class="field__error">Ad soyad zorunludur.</span>
+            }
+          </label>
+
+          <label class="field field--full">
+            <span class="field__label">Yetki *</span>
+            <select class="field__select" formControlName="role">
+              @for (opt of roleOptions; track opt) {
+                <option [value]="opt">{{ roleLabels[opt] }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span class="field__label">Şifre *</span>
+            <div class="password-field">
+              <input
+                class="field__input password-field__input"
+                [type]="createPwVisible() ? 'text' : 'password'"
+                formControlName="password"
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                class="password-field__toggle"
+                (click)="createPwVisible.set(!createPwVisible())"
+                [attr.aria-label]="
+                  createPwVisible() ? 'Şifreyi gizle' : 'Şifreyi göster'
+                "
+                [attr.aria-pressed]="createPwVisible()"
+              >
+                {{ createPwVisible() ? '🙈' : '👁️' }}
+              </button>
+            </div>
+            <span class="field__hint">En az {{ passwordMinLength }} karakter.</span>
+            @if (
+              createForm.get('password')?.touched &&
+              createForm.get('password')?.hasError('minlength')
+            ) {
+              <span class="field__error">
+                Şifre en az {{ passwordMinLength }} karakter olmalı.
+              </span>
+            }
+          </label>
+
+          <label class="field">
+            <span class="field__label">Şifre (Tekrar) *</span>
+            <div class="password-field">
+              <input
+                class="field__input password-field__input"
+                [type]="createPwConfirmVisible() ? 'text' : 'password'"
+                formControlName="passwordConfirm"
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                class="password-field__toggle"
+                (click)="createPwConfirmVisible.set(!createPwConfirmVisible())"
+                [attr.aria-label]="
+                  createPwConfirmVisible() ? 'Şifreyi gizle' : 'Şifreyi göster'
+                "
+                [attr.aria-pressed]="createPwConfirmVisible()"
+              >
+                {{ createPwConfirmVisible() ? '🙈' : '👁️' }}
+              </button>
+            </div>
+            @if (
+              createForm.get('passwordConfirm')?.touched &&
+              createForm.hasError('passwordMismatch')
+            ) {
+              <span class="field__error">Şifreler eşleşmiyor.</span>
+            }
+          </label>
+        </div>
+
+        @if (createError()) {
+          <p class="modal__error">{{ createError() }}</p>
+        }
+
+        <footer class="modal__foot">
+          <button type="button" class="btn btn--ghost" (click)="closeCreate()">
+            İptal
+          </button>
+          <button
+            type="submit"
+            class="btn btn--primary"
+            [disabled]="creating() || createForm.invalid"
+          >
+            {{ creating() ? 'Kaydediliyor…' : 'Kaydet' }}
+          </button>
+        </footer>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Şifre sıfırlama modalı -->
+@if (resetOpen()) {
+  <div class="modal-overlay" (click)="closeReset()">
+    <div class="modal modal--narrow" (click)="$event.stopPropagation()">
+      <header class="modal__head">
+        <h3 class="modal__title">Şifre Sıfırla</h3>
+        <button type="button" class="modal__close" (click)="closeReset()">
+          ×
+        </button>
+      </header>
+
+      <form [formGroup]="resetFormGroup" (ngSubmit)="reset()" class="modal__body">
+        @if (resetTarget(); as target) {
+          <p class="modal__subtext">
+            <strong>{{ target.email }}</strong> için yeni bir şifre belirle.
+          </p>
+        }
+
+        <div class="form-grid">
+          <label class="field field--full">
+            <span class="field__label">Yeni Şifre *</span>
+            <div class="password-field">
+              <input
+                class="field__input password-field__input"
+                [type]="resetPwVisible() ? 'text' : 'password'"
+                formControlName="password"
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                class="password-field__toggle"
+                (click)="resetPwVisible.set(!resetPwVisible())"
+                [attr.aria-label]="
+                  resetPwVisible() ? 'Şifreyi gizle' : 'Şifreyi göster'
+                "
+                [attr.aria-pressed]="resetPwVisible()"
+              >
+                {{ resetPwVisible() ? '🙈' : '👁️' }}
+              </button>
+            </div>
+            <span class="field__hint">En az {{ passwordMinLength }} karakter.</span>
+            @if (
+              resetFormGroup.get('password')?.touched &&
+              resetFormGroup.get('password')?.hasError('minlength')
+            ) {
+              <span class="field__error">
+                Şifre en az {{ passwordMinLength }} karakter olmalı.
+              </span>
+            }
+          </label>
+
+          <label class="field field--full">
+            <span class="field__label">Yeni Şifre (Tekrar) *</span>
+            <div class="password-field">
+              <input
+                class="field__input password-field__input"
+                [type]="resetPwConfirmVisible() ? 'text' : 'password'"
+                formControlName="passwordConfirm"
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                class="password-field__toggle"
+                (click)="resetPwConfirmVisible.set(!resetPwConfirmVisible())"
+                [attr.aria-label]="
+                  resetPwConfirmVisible() ? 'Şifreyi gizle' : 'Şifreyi göster'
+                "
+                [attr.aria-pressed]="resetPwConfirmVisible()"
+              >
+                {{ resetPwConfirmVisible() ? '🙈' : '👁️' }}
+              </button>
+            </div>
+            @if (
+              resetFormGroup.get('passwordConfirm')?.touched &&
+              resetFormGroup.hasError('passwordMismatch')
+            ) {
+              <span class="field__error">Şifreler eşleşmiyor.</span>
+            }
+          </label>
+        </div>
+
+        @if (resetError()) {
+          <p class="modal__error">{{ resetError() }}</p>
+        }
+
+        <footer class="modal__foot">
+          <button type="button" class="btn btn--ghost" (click)="closeReset()">
+            İptal
+          </button>
+          <button
+            type="submit"
+            class="btn btn--primary"
+            [disabled]="resetting() || resetFormGroup.invalid"
+          >
+            {{ resetting() ? 'Kaydediliyor…' : 'Şifreyi Güncelle' }}
+          </button>
+        </footer>
+      </form>
+    </div>
+  </div>
+}

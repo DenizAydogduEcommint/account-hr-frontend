@@ -73,6 +73,16 @@ export const routes: Routes = [
           ),
       },
       {
+        // Backoffice (E1-08) — giriş kullanıcılarının yönetimi. Yalnızca ADMIN;
+        // backend de admin/users uçlarında ADMIN-only enforce eder.
+        path: 'backoffice',
+        canActivate: [roleGuard(['ADMIN'])],
+        loadComponent: () =>
+          import('./pages/backoffice/backoffice.component').then(
+            (m) => m.BackofficeComponent,
+          ),
+      },
+      {
         // 403 — erişim yok (rol guard yönlendirmesi). Oturum içi kabukta kalır.
         path: '403',
         loadComponent: () =>

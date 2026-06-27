@@ -69,6 +69,14 @@ export class SidebarComponent {
     },
     { label: 'Eksik Fatura', icon: '!', path: '/missing-invoices' },
     { label: 'Faturalar', icon: '▤' },
+    {
+      // Backoffice (E1-08) — giriş kullanıcılarının yönetimi. Yalnızca ADMIN
+      // görür; route da roleGuard(['ADMIN']) ile korunur, backend gerçek kapı.
+      label: 'Backoffice',
+      icon: '⚙',
+      path: '/backoffice',
+      allowedRoles: ['ADMIN'],
+    },
   ];
 
   /** Role göre süzülmüş görünür menü. allowedRoles yoksa herkese açık. */
