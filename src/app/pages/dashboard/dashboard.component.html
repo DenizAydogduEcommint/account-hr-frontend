@@ -1,4 +1,16 @@
 <section class="dashboard">
+  <!-- Sayfa bilgi kartı -->
+  <app-page-info
+    storageKey="dashboard"
+    title="Aylık Özet (Gösterge Paneli)"
+    description="Seçili ayın tüm harcamalarının ve fatura durumunun tek bakışta özeti. 'Bu ay ne kadar harcandı, kaç fatura eksik?' sorusunun cevabı burada."
+    [items]="[
+      'Üstten ay seçin',
+      'Toplam gider (TL), fatura durumu dağılımı ve eksik fatura sayısı/tutarını görün',
+      'Ayrıntı için Harcamalar sayfasına geçin'
+    ]"
+  />
+
   <!-- Başlık + ay seçici -->
   <header class="dashboard__head">
     <div>

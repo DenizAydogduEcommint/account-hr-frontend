@@ -18,6 +18,7 @@ import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { PageInfoComponent } from '../../shared/page-info/page-info.component';
 import { emailListValidator } from './email-list.validator';
 import {
   ACTIVE_STATE_LABELS_TR,
@@ -47,7 +48,7 @@ import { ServicesService } from './services.service';
 @Component({
   selector: 'app-services',
   standalone: true,
-  imports: [CurrencyPipe, ReactiveFormsModule],
+  imports: [CurrencyPipe, ReactiveFormsModule, PageInfoComponent],
   templateUrl: './services.component.html',
   styleUrl: './services.component.scss',
 })

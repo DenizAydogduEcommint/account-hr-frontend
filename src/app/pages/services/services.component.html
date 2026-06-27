@@ -1,4 +1,15 @@
 <section class="services">
+  <app-page-info
+    storageKey="services"
+    title="Servisler (Ana Liste)"
+    description="Şirketin ödediği tüm servis/aboneliklerin ana listesi. Bu liste, hangi faturaların beklendiğinin (eksik fatura kontrolü) referansıdır."
+    [items]="[
+      'Her servisin sağlayıcı, kart, frekans (aylık/yıllık) ve aktiflik bilgisini görün',
+      'Yönetici olarak yeni servis ekleyin, düzenleyin veya pasifleştirin',
+      'Buradaki aktif servisler, Eksik Faturalar kontrolünü besler'
+    ]"
+  />
+
   <!-- Başlık + aksiyon -->
   <header class="services__head">
     <div>

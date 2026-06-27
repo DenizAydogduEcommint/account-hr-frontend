@@ -15,6 +15,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { MonthSelectorComponent } from '../../shared/month-selector/month-selector.component';
+import { PageInfoComponent } from '../../shared/page-info/page-info.component';
 import { DEFAULT_MONTH } from '../../shared/default-month';
 import { ExpenseCreateModalComponent } from '../../shared/expense-create/expense-create-modal.component';
 import { StatusBadgeComponent } from '../../shared/status-badge/status-badge.component';
@@ -53,6 +54,7 @@ const PAGE_SIZE = 50;
   standalone: true,
   imports: [
     MonthSelectorComponent,
+    PageInfoComponent,
     StatusBadgeComponent,
     ExpenseCreateModalComponent,
   ],

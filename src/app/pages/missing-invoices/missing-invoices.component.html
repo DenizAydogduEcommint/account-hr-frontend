@@ -1,4 +1,15 @@
 <section class="missing">
+  <app-page-info
+    storageKey="missing-invoices"
+    title="Eksik Faturalar"
+    description="Faturası henüz toplanmamış (belgesiz) giderlerin listesi. Belgesiz gider muhasebede risktir; bu sayfa 'hangi faturayı bekliyoruz?' sorusunu cevaplar."
+    [items]="[
+      'O ay beklenen ama faturası gelmemiş servisleri görün',
+      'Yaklaşık toplam belgesiz gider tutarını takip edin',
+      'Eksik faturaları sağlayıcıdan veya e-postadan isteyin'
+    ]"
+  />
+
   <!-- Başlık -->
   <header class="missing__head">
     <div>

@@ -1,4 +1,16 @@
 <section class="expenses">
+  <!-- Sayfa bilgi kartı -->
+  <app-page-info
+    storageKey="expenses"
+    title="Aylık Harcamalar"
+    description="Seçili aydaki tüm kart harcamalarının (servis/abonelik) satır satır listesi. Banka ekstresindeki her çekim burada bir satırdır — muhasebenin temel kaydıdır."
+    [items]="[
+      'Ay seçin; her işlemin tarih, hizmet, tutar, kart ve fatura durumunu görün',
+      'Bir satıra tıklayıp detayını ve yüklü faturalarını inceleyin',
+      'Fatura durumunu güncelleyin, fatura yükleyin veya elle yeni satır ekleyin'
+    ]"
+  />
+
   <!-- Başlık -->
   <header class="expenses__head">
     <div>

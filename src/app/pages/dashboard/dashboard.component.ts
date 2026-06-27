@@ -22,6 +22,7 @@ import {
   STATUS_ORDER,
 } from '../../shared/status-colors';
 import { MonthSelectorComponent } from '../../shared/month-selector/month-selector.component';
+import { PageInfoComponent } from '../../shared/page-info/page-info.component';
 import { DEFAULT_MONTH } from '../../shared/default-month';
 import { DashboardSummary } from './dashboard.models';
 import { DashboardService } from './dashboard.service';
@@ -50,7 +51,12 @@ interface DonutChartOptions {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CurrencyPipe, NgApexchartsModule, MonthSelectorComponent],
+  imports: [
+    CurrencyPipe,
+    NgApexchartsModule,
+    MonthSelectorComponent,
+    PageInfoComponent,
+  ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })

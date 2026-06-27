@@ -10,6 +10,7 @@ import { Subscription } from 'rxjs';
 
 import { DEFAULT_MONTH } from '../../shared/default-month';
 import { MonthSelectorComponent } from '../../shared/month-selector/month-selector.component';
+import { PageInfoComponent } from '../../shared/page-info/page-info.component';
 import { CardRef } from '../expenses/expenses.models';
 import {
   ParsedTxn,
@@ -40,7 +41,7 @@ import { StatementsService } from './statements.service';
 @Component({
   selector: 'app-statements',
   standalone: true,
-  imports: [MonthSelectorComponent],
+  imports: [MonthSelectorComponent, PageInfoComponent],
   templateUrl: './statements.component.html',
   styleUrl: './statements.component.scss',
 })

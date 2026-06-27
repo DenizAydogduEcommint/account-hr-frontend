@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 
+import { PageInfoComponent } from '../../shared/page-info/page-info.component';
 import {
   IncomingInvoice,
   IncomingPullSummary,
@@ -39,7 +40,7 @@ interface StatusFilterOption {
 @Component({
   selector: 'app-incoming',
   standalone: true,
-  imports: [],
+  imports: [PageInfoComponent],
   templateUrl: './incoming.component.html',
   styleUrl: './incoming.component.scss',
 })

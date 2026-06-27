@@ -11,6 +11,7 @@ import { Subscription } from 'rxjs';
 import { DEFAULT_MONTH } from '../../shared/default-month';
 import { InvoiceUploadModalComponent } from '../../shared/invoice-upload/invoice-upload-modal.component';
 import { MonthSelectorComponent } from '../../shared/month-selector/month-selector.component';
+import { PageInfoComponent } from '../../shared/page-info/page-info.component';
 import {
   FREQUENCY_LABELS_TR,
   MissingInvoiceRow,
@@ -34,7 +35,7 @@ import { MissingInvoicesService } from './missing-invoices.service';
 @Component({
   selector: 'app-missing-invoices',
   standalone: true,
-  imports: [MonthSelectorComponent, InvoiceUploadModalComponent],
+  imports: [MonthSelectorComponent, InvoiceUploadModalComponent, PageInfoComponent],
   templateUrl: './missing-invoices.component.html',
   styleUrl: './missing-invoices.component.scss',
 })
