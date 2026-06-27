@@ -2,13 +2,9 @@
   <!-- Sayfa bilgi kartı -->
   <app-page-info
     storageKey="dashboard"
-    title="Aylık Özet (Gösterge Paneli)"
-    description="Seçili ayın tüm harcamalarının ve fatura durumunun tek bakışta özeti. 'Bu ay ne kadar harcandı, kaç fatura eksik?' sorusunun cevabı burada."
-    [items]="[
-      'Üstten ay seçin',
-      'Toplam gider (TL), fatura durumu dağılımı ve eksik fatura sayısı/tutarını görün',
-      'Ayrıntı için Harcamalar sayfasına geçin'
-    ]"
+    title="Aylık Özet"
+    description="Seçtiğin ayın genel durumu tek ekranda: o ay ne kadar harcandı ve kaç faturanın hâlâ toplanması gerekiyor."
+    [items]="pageInfoItems"
   />
 
   <!-- Başlık + ay seçici -->

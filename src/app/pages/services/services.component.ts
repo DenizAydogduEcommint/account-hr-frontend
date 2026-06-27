@@ -53,6 +53,13 @@ import { ServicesService } from './services.service';
   styleUrl: './services.component.scss',
 })
 export class ServicesComponent implements OnInit, OnDestroy {
+  /** Sayfa bilgi kartı madde listesi (apostroflar güvende olsun diye .ts'te). */
+  readonly pageInfoItems: string[] = [
+    'Her servisin hangi firmadan alındığını, hangi kartla ve ne sıklıkla (aylık/yıllık) ödendiğini gör',
+    'Yöneticiysen yeni servis ekleyebilir, bilgilerini değiştirebilir ya da artık kullanılmıyorsa kapatabilirsin',
+    'Buradaki servisler, Eksik Faturalar listesinin neyi bekleyeceğini belirler',
+  ];
+
   private readonly service = inject(ServicesService);
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);

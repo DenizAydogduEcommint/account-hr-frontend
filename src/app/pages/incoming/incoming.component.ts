@@ -45,6 +45,13 @@ interface StatusFilterOption {
   styleUrl: './incoming.component.scss',
 })
 export class IncomingComponent implements OnInit, OnDestroy {
+  /** Sayfa bilgi kartı madde listesi (apostroflar güvende olsun diye .ts'te). */
+  readonly pageInfoItems: string[] = [
+    "Çek düğmesine basarak Drive'daki yeni faturaları sisteme al",
+    'Gelen faturaları ve durumlarını (Yeni / Eşleşti / Yoksayıldı) gör',
+    'İlgisiz dosyaları Yoksay düğmesiyle bir kenara ayır',
+  ];
+
   private readonly service = inject(IncomingService);
 
   private listSub?: Subscription;

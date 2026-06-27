@@ -1,14 +1,9 @@
 <section class="statements">
   <app-page-info
     storageKey="statements"
-    title="Banka Ekstresi Yükleme"
-    description="Banka kart ekstresini yükleyip işlemleri otomatik çıkarma. Manuel veri girişi yerine sistem ekstreyi okur."
-    [items]="[
-      'Dosya (Excel/Word), kart ve ay seçip yükleyin',
-      'Çıkan işlemleri önizleyin ve uyarıları kontrol edin',
-      'Doğruysa onaylayın — işlemler sisteme kaydedilir',
-      'Not: Bazı banka formatları için otomatik okuma henüz hazırlık aşamasındadır'
-    ]"
+    title="Ekstre Yükle"
+    description="Bankadan gelen kart ekstresini (harcama dökümünü) buraya yükle; sistem işlemleri otomatik okusun, elle tek tek girmekle uğraşma."
+    [items]="pageInfoItems"
   />
 
   <!-- Başlık -->

@@ -40,6 +40,13 @@ import { MissingInvoicesService } from './missing-invoices.service';
   styleUrl: './missing-invoices.component.scss',
 })
 export class MissingInvoicesComponent implements OnInit, OnDestroy {
+  /** Sayfa bilgi kartı madde listesi (apostroflar güvende olsun diye .ts'te). */
+  readonly pageInfoItems: string[] = [
+    'O ay faturası eksik olan servisleri gör',
+    'Toplamda ne kadarlık faturanın eksik olduğunu gör',
+    'Eksik faturaları ilgili firmadan veya e-posta ile iste',
+  ];
+
   private readonly service = inject(MissingInvoicesService);
 
   // ---- Durum -------------------------------------------------------------

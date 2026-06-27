@@ -1,13 +1,9 @@
 <section class="incoming">
   <app-page-info
     storageKey="incoming"
-    title="Gelen Faturalar (Drive)"
-    description="Google Drive'daki 'waiting' klasörüne eklenen faturaları otomatik çekme. Ekibin Drive'a attığı faturalar buraya düşer; tek tek indirmeye gerek kalmaz."
-    [items]="[
-      '\'Drive\'dan Çek\' ile yeni faturaları sisteme alın',
-      'Çekilen faturaları ve durumlarını (Yeni/Eşleşti/Yoksayıldı) görün',
-      'İlgili olmayan dosyaları \'Yoksay\' ile işaretleyin'
-    ]"
+    title="Gelen Faturalar"
+    description="Ekibin Google Drive'daki bekleyen (waiting) klasörüne attığı faturalar buraya gelir. Böylece faturaları tek tek indirmekle uğraşmazsın."
+    [items]="pageInfoItems"
   />
 
   <!-- Başlık + çekme aksiyonu -->

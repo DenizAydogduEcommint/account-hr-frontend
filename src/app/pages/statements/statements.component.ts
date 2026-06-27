@@ -46,6 +46,14 @@ import { StatementsService } from './statements.service';
   styleUrl: './statements.component.scss',
 })
 export class StatementsComponent implements OnInit, OnDestroy {
+  /** Sayfa bilgi kartı madde listesi (apostroflar güvende olsun diye .ts'te). */
+  readonly pageInfoItems: string[] = [
+    'Ekstre dosyasını (Excel veya Word), kartı ve ayı seç, sonra yükle',
+    'Sistemin okuduğu işlemleri kontrol et',
+    'Doğruysa onayla, işlemler kaydedilsin',
+    'Not: Bazı banka dosyaları için otomatik okuma henüz hazırlanıyor',
+  ];
+
   private readonly service = inject(StatementsService);
 
   private uploadSub?: Subscription;

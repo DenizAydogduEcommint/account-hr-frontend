@@ -62,6 +62,13 @@ const PAGE_SIZE = 50;
   styleUrl: './expenses.component.scss',
 })
 export class ExpensesComponent implements OnInit, OnDestroy {
+  /** Sayfa bilgi kartı madde listesi (apostroflar güvende olsun diye .ts'te). */
+  readonly pageInfoItems: string[] = [
+    'Görmek istediğin ayı seç',
+    'Her ödemenin tarihini, neye yapıldığını, tutarını ve faturasının olup olmadığını gör',
+    'Bir satıra tıklayıp faturasını görebilir, fatura yükleyebilir ya da elle yeni ödeme ekleyebilirsin',
+  ];
+
   private readonly service = inject(ExpensesService);
   private readonly auth = inject(AuthService);
   private readonly sanitizer = inject(DomSanitizer);
