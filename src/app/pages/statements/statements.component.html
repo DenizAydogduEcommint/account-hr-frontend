@@ -1,0 +1,234 @@
+<section class="statements">
+  <!-- Başlık -->
+  <header class="statements__head">
+    <div>
+      <h2 class="statements__title">Ekstre Yükle</h2>
+      <p class="statements__subtitle">
+        Banka ekstresini yükle, çıkarılan hareketleri önizle ve onayla
+      </p>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       Form: dosya + kart + ay
+       ============================================================ -->
+  <div class="upload-card">
+    <div class="toolbar">
+      <!-- Dosya seçimi -->
+      <label class="field field--grow">
+        <span class="field__label">Ekstre Dosyası (.xlsx / .xls / .docx)</span>
+        <input
+          type="file"
+          class="field__input file-input"
+          accept=".xlsx,.xls,.docx"
+          (change)="onFilePicked($event)"
+          [disabled]="uploading()"
+          aria-label="Ekstre dosyası seçimi"
+        />
+      </label>
+
+      <!-- Kart seçimi -->
+      <label class="field">
+        <span class="field__label">Kart</span>
+        <select
+          class="field__select"
+          (change)="onCardChange($event)"
+          [disabled]="uploading()"
+          aria-label="Kart seçimi"
+        >
+          <option value="" [selected]="cardLast4() === ''">Kart seçin…</option>
+          @for (card of cards(); track card.id) {
+            <option [value]="card.last4" [selected]="card.last4 === cardLast4()">
+              {{ cardOptionLabel(card) }}
+            </option>
+          }
+        </select>
+      </label>
+
+      <!-- Ay seçimi (ortak bileşen) -->
+      <div class="field">
+        <app-month-selector
+          [value]="month()"
+          (valueChange)="onMonthChange($event)"
+        />
+      </div>
+
+      <!-- Yükle aksiyonu -->
+      <div class="field">
+        <button
+          type="button"
+          class="btn btn--primary"
+          [disabled]="!canUpload()"
+          (click)="upload()"
+        >
+          @if (uploading()) {
+            Yükleniyor…
+          } @else {
+            Yükle ve Önizle
+          }
+        </button>
+      </div>
+    </div>
+
+    <!-- Seçili dosya özeti -->
+    @if (file(); as f) {
+      <p class="upload-card__file">
+        <span class="upload-card__file-name">{{ f.name }}</span>
+        <span class="upload-card__file-size">({{ formatSize(f.size) }})</span>
+      </p>
+    }
+
+    <!-- İstemci doğrulama hatası (dosya tipi/boyutu) -->
+    @if (fileError(); as fe) {
+      <p class="inline-error">{{ fe }}</p>
+    }
+
+    <!-- Sunucu yükleme hatası -->
+    @if (uploadError(); as ue) {
+      <p class="inline-error">{{ ue }}</p>
+    }
+  </div>
+
+  <!-- Başarı bildirimi (onay sonrası) -->
+  @if (confirmSuccess(); as msg) {
+    <div class="notice notice--success" role="status">
+      <span class="notice__icon">✓</span>
+      <span class="notice__text">{{ msg }}</span>
+    </div>
+  }
+
+  <!-- ============================================================
+       Yükleme iskeleti (parse devam ederken)
+       ============================================================ -->
+  @if (uploading()) {
+    <div class="table-card">
+      <div class="skeleton skeleton--row"></div>
+      <div class="skeleton skeleton--row"></div>
+      <div class="skeleton skeleton--row"></div>
+    </div>
+  }
+
+  <!-- ============================================================
+       Önizleme (parse sonucu)
+       ============================================================ -->
+  @if (!uploading() && preview(); as pv) {
+    <div class="preview">
+      <header class="preview__head">
+        <h3 class="preview__title">Parse Önizlemesi</h3>
+        <p class="preview__meta">
+          Kart <strong>****{{ pv.card }}</strong> · Ay
+          <strong>{{ pv.month }}</strong>
+        </p>
+      </header>
+
+      <!-- "Zaten yüklenmiş" bildirimi -->
+      @if (alreadyUploaded()) {
+        <div class="notice notice--warn" role="alert">
+          <span class="notice__icon">!</span>
+          <span class="notice__text">
+            Bu ekstre zaten yüklenmiş. Yeniden onaylanamaz.
+          </span>
+        </div>
+      }
+
+      <!-- Uyarı paneli (placeholder parser mesajı burada görünür) -->
+      @if (warnings().length > 0) {
+        <div class="warnings" role="status">
+          <p class="warnings__title">Uyarılar</p>
+          <ul class="warnings__list">
+            @for (w of warnings(); track w) {
+              <li class="warnings__item">{{ w }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Hareket tablosu / boş-durum -->
+      @if (hasNoTransactions()) {
+        <div class="state-box">
+          <span class="state-box__icon">∅</span>
+          <p class="state-box__title">Henüz işlem çıkarılamadı</p>
+          <p class="state-box__text">
+            Parser örnek bekliyor — ekstre formatı tanımlandığında hareketler
+            burada listelenecek.
+          </p>
+        </div>
+      } @else {
+        <div class="table-card">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Tarih</th>
+                <th>Açıklama</th>
+                <th class="table__num">Tutar</th>
+                <th>Para Birimi</th>
+                <th class="table__num">TL Karşılığı</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (txn of transactions(); track $index) {
+                <tr>
+                  <td>{{ formatDate(txn.transactionDate) }}</td>
+                  <td class="table__desc" [title]="txn.rawText || ''">
+                    {{ txn.description || '—' }}
+                    @if (txn.parseWarning; as pw) {
+                      <span
+                        class="table__warn"
+                        role="img"
+                        aria-label="Parse uyarısı"
+                        [title]="pw"
+                        >!</span
+                      >
+                    }
+                  </td>
+                  <td class="table__num">{{ formatNumber(txn.amount) }}</td>
+                  <td>{{ txn.currency || '—' }}</td>
+                  <td class="table__num">
+                    {{ formatNumber(txn.amountTry, true) }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Hareket sayısı özeti -->
+        <div class="summary-bar">
+          <div class="summary-bar__total">
+            <span class="summary-bar__label">Toplam Hareket</span>
+            <span class="summary-bar__value">{{ transactions().length }}</span>
+          </div>
+        </div>
+      }
+
+      <!-- Onay hatası -->
+      @if (confirmError(); as ce) {
+        <p class="inline-error">{{ ce }}</p>
+      }
+
+      <!-- Aksiyonlar: Onayla / İptal -->
+      <div class="preview__actions">
+        <button
+          type="button"
+          class="btn btn--ghost"
+          [disabled]="confirming()"
+          (click)="cancelPreview()"
+        >
+          İptal
+        </button>
+        <button
+          type="button"
+          class="btn btn--primary"
+          [disabled]="!canConfirm()"
+          (click)="confirm()"
+        >
+          @if (confirming()) {
+            Onaylanıyor…
+          } @else {
+            Onayla
+          }
+        </button>
+      </div>
+    </div>
+  }
+</section>

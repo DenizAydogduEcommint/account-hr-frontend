@@ -45,6 +45,16 @@ export const routes: Routes = [
           ),
       },
       {
+        // Ekstre yükleme (E4-01) — banka ekstresini parse et, önizle, onayla.
+        // Yalnızca ADMIN/ACCOUNTING; backend de aynı rolleri enforce eder.
+        path: 'statements',
+        canActivate: [roleGuard(['ADMIN', 'ACCOUNTING'])],
+        loadComponent: () =>
+          import('./pages/statements/statements.component').then(
+            (m) => m.StatementsComponent,
+          ),
+      },
+      {
         path: 'missing-invoices',
         loadComponent: () =>
           import('./pages/missing-invoices/missing-invoices.component').then(

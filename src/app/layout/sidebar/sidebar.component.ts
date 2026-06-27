@@ -51,6 +51,14 @@ export class SidebarComponent {
     { label: 'Dashboard', icon: '▣', path: '/dashboard' },
     { label: 'Servisler', icon: '◆', path: '/services' },
     { label: 'Harcamalar', icon: '₺', path: '/expenses' },
+    {
+      // Ekstre yükleme (E4-01) — yalnızca ADMIN/ACCOUNTING görür; route da
+      // roleGuard(['ADMIN','ACCOUNTING']) ile korunur, backend gerçek kapı.
+      label: 'Ekstre Yükle',
+      icon: '⭳',
+      path: '/statements',
+      allowedRoles: ['ADMIN', 'ACCOUNTING'],
+    },
     { label: 'Eksik Fatura', icon: '!', path: '/missing-invoices' },
     { label: 'Faturalar', icon: '▤' },
   ];

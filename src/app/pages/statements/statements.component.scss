@@ -1,0 +1,454 @@
+@use 'styles/tokens' as *;
+
+.statements {
+  &__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: $space-2;
+    margin-bottom: $space-3;
+    flex-wrap: wrap;
+  }
+
+  &__title {
+    margin: 0 0 6px;
+    font-size: 24px;
+    font-weight: 700;
+    color: $ec-text;
+  }
+
+  &__subtitle {
+    margin: 0;
+    font-size: 14px;
+    color: rgba(34, 34, 34, 0.6);
+  }
+}
+
+// ---- Yükleme kartı (form) ------------------------------------------------
+.upload-card {
+  background: $ec-bg;
+  border: 1px solid $ec-border;
+  border-radius: $radius-card;
+  box-shadow: $shadow-sm;
+  padding: $space-3;
+  margin-bottom: $space-3;
+
+  &__file {
+    margin: $space-2 0 0;
+    font-size: 14px;
+    color: $ec-text;
+  }
+
+  &__file-name {
+    font-weight: 600;
+  }
+
+  &__file-size {
+    margin-left: 6px;
+    color: rgba(34, 34, 34, 0.55);
+  }
+}
+
+// ---- Toolbar (filtre/form alanları) — Harcamalar ile aynı dil -------------
+.toolbar {
+  display: flex;
+  gap: $space-2;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &--grow {
+    flex: 1;
+    min-width: 260px;
+  }
+
+  &__label {
+    font-size: 13px;
+    font-weight: 500;
+    color: $ec-text;
+  }
+
+  &__input,
+  &__select {
+    height: 38px;
+    padding: 0 12px;
+    border: 1.5px solid $ec-border;
+    border-radius: $radius-input;
+    background: $ec-bg;
+    color: $ec-text;
+    font-family: inherit;
+    font-size: 14px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover {
+      border-color: $ec-primary;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $ec-primary;
+      box-shadow: 0 0 0 3px rgba(0, 178, 122, 0.15);
+    }
+  }
+
+  &__select {
+    cursor: pointer;
+  }
+}
+
+// Dosya seçici: native input'a uygun dikey hizalama + tıklanabilir buton.
+.file-input {
+  display: flex;
+  align-items: center;
+  padding: 5px 12px;
+  cursor: pointer;
+
+  &::file-selector-button {
+    margin-right: 12px;
+    padding: 5px 12px;
+    border: 1.5px solid $ec-border;
+    border-radius: $radius-input;
+    background: $ec-gray-1;
+    color: $ec-text;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+
+  &:hover::file-selector-button {
+    border-color: $ec-primary;
+    color: $ec-primary;
+  }
+}
+
+// ---- Inline hata (form/onay) ---------------------------------------------
+.inline-error {
+  margin: $space-2 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: $status-expected;
+}
+
+// ---- Bildirim kutusu (başarı / zaten yüklü) ------------------------------
+.notice {
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+  padding: 12px $space-2;
+  margin-bottom: $space-3;
+  border-radius: $radius-input;
+  font-size: 14px;
+  font-weight: 500;
+
+  &__icon {
+    display: inline-grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    flex: 0 0 auto;
+  }
+
+  &--success {
+    background: rgba(76, 175, 80, 0.12);
+    color: $status-found;
+
+    .notice__icon {
+      background: $status-found;
+    }
+  }
+
+  &--warn {
+    background: rgba(255, 152, 0, 0.12);
+    color: #b35c00;
+
+    .notice__icon {
+      background: $status-ignored;
+    }
+  }
+}
+
+// ---- Uyarı paneli (parser placeholder mesajı dahil) ----------------------
+.warnings {
+  background: rgba(255, 152, 0, 0.08);
+  border: 1px solid rgba(255, 152, 0, 0.3);
+  border-radius: $radius-input;
+  padding: $space-2;
+  margin-bottom: $space-3;
+
+  &__title {
+    margin: 0 0 6px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #b35c00;
+  }
+
+  &__list {
+    margin: 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__item {
+    font-size: 14px;
+    color: $ec-text;
+  }
+}
+
+// ---- Önizleme bölümü -----------------------------------------------------
+.preview {
+  &__head {
+    margin-bottom: $space-2;
+  }
+
+  &__title {
+    margin: 0 0 4px;
+    font-size: 18px;
+    font-weight: 700;
+    color: $ec-text;
+  }
+
+  &__meta {
+    margin: 0;
+    font-size: 13px;
+    color: rgba(34, 34, 34, 0.6);
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: $space-1;
+    margin-top: $space-3;
+  }
+}
+
+// ---- Tablo kartı (yatay kaydırılabilir) — Harcamalar ile aynı -------------
+.table-card {
+  background: $ec-bg;
+  border: 1px solid $ec-border;
+  border-radius: $radius-card;
+  box-shadow: $shadow-sm;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  thead th {
+    text-align: left;
+    padding: 14px 12px;
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: rgba(34, 34, 34, 0.55);
+    border-bottom: 2px solid $ec-border;
+    white-space: nowrap;
+    background: $ec-gray-2;
+  }
+
+  tbody td {
+    padding: 12px;
+    border-bottom: 1px solid $ec-border;
+    color: $ec-text;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  &__num {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  &__desc {
+    max-width: 320px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__warn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    margin-left: $space-1;
+    border-radius: 50%;
+    background: #fbe9d0;
+    color: #b35c00;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: help;
+    vertical-align: middle;
+  }
+}
+
+// ---- Toplam çubuğu — Harcamalar ile aynı ---------------------------------
+.summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: $space-2;
+  margin-top: $space-2;
+  padding: $space-2 $space-3;
+  background: $ec-bg;
+  border: 1px solid $ec-border;
+  border-radius: $radius-card;
+  box-shadow: $shadow-sm;
+  flex-wrap: wrap;
+
+  &__total {
+    display: flex;
+    align-items: baseline;
+    gap: $space-1;
+  }
+
+  &__label {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: rgba(34, 34, 34, 0.55);
+  }
+
+  &__value {
+    font-size: 20px;
+    font-weight: 700;
+    color: $ec-primary-dark;
+  }
+}
+
+// ---- Durum kutusu (boş) — Harcamalar/Dashboard ile aynı ------------------
+.state-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  background: $ec-bg;
+  border: 1px solid $ec-border;
+  border-radius: $radius-card;
+  box-shadow: $shadow-sm;
+  padding: $space-6 $space-3;
+
+  &__icon {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: $ec-gray-1;
+    color: rgba(34, 34, 34, 0.5);
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: $ec-text;
+  }
+
+  &__text {
+    margin: 0;
+    max-width: 420px;
+    font-size: 14px;
+    color: rgba(34, 34, 34, 0.6);
+  }
+}
+
+// ---- İskelet (loading) — Harcamalar ile aynı -----------------------------
+.skeleton {
+  border-radius: $radius-input;
+  background: linear-gradient(
+    90deg,
+    $ec-gray-1 25%,
+    $ec-gray-3 50%,
+    $ec-gray-1 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+
+  &--row {
+    height: 44px;
+    margin: 10px;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+// ---- Buton — Harcamalar ile aynı -----------------------------------------
+.btn {
+  height: 40px;
+  padding: 0 18px;
+  border: none;
+  border-radius: $radius-input;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+
+  &--primary {
+    background: $ec-primary;
+    color: #fff;
+
+    &:hover:not(:disabled) {
+      background: $ec-primary-dark;
+    }
+  }
+
+  &--ghost {
+    background: transparent;
+    color: $ec-text;
+    border: 1.5px solid $ec-border;
+
+    &:hover:not(:disabled) {
+      border-color: $ec-primary;
+      color: $ec-primary;
+    }
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+@media (max-width: 768px) {
+  .field--grow {
+    min-width: 100%;
+  }
+}
