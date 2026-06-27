@@ -44,7 +44,8 @@ export class MissingInvoicesComponent implements OnInit, OnDestroy {
   readonly pageInfoItems: string[] = [
     'O ay faturası eksik olan servisleri gör',
     'Toplamda ne kadarlık faturanın eksik olduğunu gör',
-    'Eksik faturaları ilgili firmadan veya e-posta ile iste',
+    'Faturayı bulunca her satırdaki "Fatura Yükle" ile sisteme ekle',
+    'Hatırlatma e-postası gönderme özelliği yakında eklenecek',
   ];
 
   private readonly service = inject(MissingInvoicesService);

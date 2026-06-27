@@ -63,7 +63,7 @@ interface DonutChartOptions {
 export class DashboardComponent implements OnInit, OnDestroy {
   /** Sayfa bilgi kartı madde listesi (apostroflar güvende olsun diye .ts'te). */
   readonly pageInfoItems: string[] = [
-    'Yukarıdan görmek istediğin ayı seç',
+    'Ay menüsünden görmek istediğin ayı seç',
     'O ayın toplam harcamasını ve faturaların durumunu gör',
     'Tek tek işlemler için Harcamalar sayfasına geç',
   ];
