@@ -55,6 +55,17 @@ export const routes: Routes = [
           ),
       },
       {
+        // Gelen Faturalar (E5-02) — Drive bekleyenler klasöründen ham faturaları
+        // çek ve listele. Yalnızca ADMIN/ACCOUNTING; backend de aynı rolleri
+        // enforce eder.
+        path: 'incoming',
+        canActivate: [roleGuard(['ADMIN', 'ACCOUNTING'])],
+        loadComponent: () =>
+          import('./pages/incoming/incoming.component').then(
+            (m) => m.IncomingComponent,
+          ),
+      },
+      {
         path: 'missing-invoices',
         loadComponent: () =>
           import('./pages/missing-invoices/missing-invoices.component').then(

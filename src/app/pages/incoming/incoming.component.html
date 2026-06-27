@@ -1,0 +1,142 @@
+<section class="incoming">
+  <!-- Başlık + çekme aksiyonu -->
+  <header class="incoming__head">
+    <div>
+      <h2 class="incoming__title">Gelen Faturalar</h2>
+      <p class="incoming__subtitle">
+        Drive bekleyenler klasöründen gelen ham faturaları çek ve görüntüle
+      </p>
+    </div>
+    <button
+      type="button"
+      class="btn btn--primary"
+      [disabled]="pulling()"
+      (click)="pull()"
+    >
+      @if (pulling()) {
+        Çekiliyor…
+      } @else {
+        Drive’dan Çek
+      }
+    </button>
+  </header>
+
+  <!-- Çekme özeti (son çekmeden sonra) -->
+  @if (pullSummary(); as s) {
+    <div class="notice notice--success" role="status">
+      <span class="notice__icon">✓</span>
+      <span class="notice__text">
+        Çekilen: <strong>{{ s.pulledCount }}</strong> · Yeni:
+        <strong>{{ s.newCount }}</strong> · Atlanan:
+        <strong>{{ s.skippedCount }}</strong>
+      </span>
+    </div>
+  }
+
+  <!-- Çekme hatası -->
+  @if (pullError(); as pe) {
+    <p class="inline-error">{{ pe }}</p>
+  }
+
+  <!-- Durum filtresi -->
+  <div class="toolbar">
+    <label class="field">
+      <span class="field__label">Durum</span>
+      <select
+        class="field__select"
+        (change)="onStatusChange($event)"
+        [disabled]="loading()"
+        aria-label="Durum filtresi"
+      >
+        @for (opt of statusOptions; track opt.value) {
+          <option [value]="opt.value" [selected]="opt.value === statusFilter()">
+            {{ opt.label }}
+          </option>
+        }
+      </select>
+    </label>
+  </div>
+
+  <!-- Satır aksiyon hatası -->
+  @if (actionError(); as ae) {
+    <p class="inline-error">{{ ae }}</p>
+  }
+
+  <!-- Liste yükleme hatası -->
+  @if (listError(); as le) {
+    <p class="inline-error">{{ le }}</p>
+  }
+
+  <!-- Yükleme iskeleti -->
+  @if (loading()) {
+    <div class="table-card">
+      <div class="skeleton skeleton--row"></div>
+      <div class="skeleton skeleton--row"></div>
+      <div class="skeleton skeleton--row"></div>
+    </div>
+  } @else if (isEmpty()) {
+    <!-- Boş-durum -->
+    <div class="state-box">
+      <span class="state-box__icon">∅</span>
+      <p class="state-box__title">Henüz gelen fatura yok</p>
+      <p class="state-box__text">Drive’dan çekin.</p>
+    </div>
+  } @else {
+    <!-- Liste -->
+    <div class="table-card">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Kaynak</th>
+            <th>Dosya</th>
+            <th>Alınma Tarihi</th>
+            <th>Durum</th>
+            <th class="table__actions">İşlem</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track item.id) {
+            <tr>
+              <td>{{ sourceLabel(item.source) }}</td>
+              <td class="table__file" [title]="item.notes || ''">
+                {{ item.fileName }}
+              </td>
+              <td>{{ formatDate(item.receivedAt) }}</td>
+              <td>
+                <span class="badge" [class]="statusClass(item.status)">
+                  {{ statusLabel(item.status) }}
+                </span>
+              </td>
+              <td class="table__actions">
+                @if (item.status === 'NEW') {
+                  <button
+                    type="button"
+                    class="btn btn--ghost btn--sm"
+                    [disabled]="ignoringId() !== null"
+                    (click)="ignore(item)"
+                  >
+                    @if (ignoringId() === item.id) {
+                      Yoksayılıyor…
+                    } @else {
+                      Yoksay
+                    }
+                  </button>
+                } @else {
+                  <span class="table__dash">—</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Kayıt sayısı özeti -->
+    <div class="summary-bar">
+      <div class="summary-bar__total">
+        <span class="summary-bar__label">Toplam Kayıt</span>
+        <span class="summary-bar__value">{{ items().length }}</span>
+      </div>
+    </div>
+  }
+</section>

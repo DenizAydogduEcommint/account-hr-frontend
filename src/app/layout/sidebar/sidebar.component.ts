@@ -59,6 +59,14 @@ export class SidebarComponent {
       path: '/statements',
       allowedRoles: ['ADMIN', 'ACCOUNTING'],
     },
+    {
+      // Gelen Faturalar (E5-02) — yalnızca ADMIN/ACCOUNTING görür; route da
+      // roleGuard(['ADMIN','ACCOUNTING']) ile korunur, backend gerçek kapı.
+      label: 'Gelen Faturalar',
+      icon: '⬇',
+      path: '/incoming',
+      allowedRoles: ['ADMIN', 'ACCOUNTING'],
+    },
     { label: 'Eksik Fatura', icon: '!', path: '/missing-invoices' },
     { label: 'Faturalar', icon: '▤' },
   ];
