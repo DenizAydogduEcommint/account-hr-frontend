@@ -260,6 +260,106 @@
   }
 }
 
+// ---- Otomatik fatura okuma (E5-03) --------------------------------------
+.parse-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: rgba(34, 34, 34, 0.7);
+  background: $ec-gray-2;
+  border: 1px solid $ec-border;
+  border-radius: $radius-input;
+
+  &__spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(0, 178, 122, 0.25);
+    border-top-color: $ec-primary;
+    border-radius: 50%;
+    animation: parse-spin 0.7s linear infinite;
+    flex: none;
+  }
+}
+
+@keyframes parse-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.read-panel {
+  padding: $space-2;
+  border: 1px solid $ec-border;
+  border-left: 3px solid $ec-primary;
+  border-radius: $radius-input;
+  background: rgba(0, 178, 122, 0.04);
+
+  &__title {
+    margin: 0 0 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: $ec-text;
+  }
+
+  &__grid {
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 16px;
+  }
+
+  &__row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+
+    &--wide {
+      grid-column: 1 / -1;
+    }
+
+    dt {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      color: rgba(34, 34, 34, 0.5);
+    }
+
+    dd {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 500;
+      color: $ec-text;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  &__unit {
+    margin-left: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(34, 34, 34, 0.6);
+  }
+
+  &__warn {
+    margin: 10px 0 0;
+    font-size: 12px;
+    color: $status-to-investigate;
+    font-weight: 500;
+  }
+}
+
+.parse-note {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(34, 34, 34, 0.6);
+  font-style: italic;
+}
+
 // ---- Hata kutusu ---------------------------------------------------------
 .alert {
   padding: 10px 14px;

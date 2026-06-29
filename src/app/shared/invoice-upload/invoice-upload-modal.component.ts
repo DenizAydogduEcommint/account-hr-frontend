@@ -17,6 +17,7 @@ import {
   CURRENCY_OPTIONS,
   Currency,
   MAX_FILE_SIZE_BYTES,
+  ParsedInvoiceResponse,
 } from './invoice-upload.models';
 import { InvoiceUploadService } from './invoice-upload.service';
 
@@ -50,6 +51,16 @@ export class InvoiceUploadModalComponent implements OnDestroy {
 
   /** Devam eden yükleme aboneliği; bileşen yok edilince iptal edilir. */
   private uploadSub?: Subscription;
+
+  // ---- Otomatik fatura okuma (E5-03) ------------------------------------
+  /** Devam eden parse aboneliği; yeni dosya seçilince / yok edilince iptal edilir. */
+  private parseSub?: Subscription;
+  /**
+   * Bayat-yanıt koruması: her parse tetiklemesinde artar. Yanıt geldiğinde
+   * yakalanan token güncel token ile eşleşmiyorsa (kullanıcı dosyayı değiştirmiş)
+   * yanıt YOK SAYILIR — sıra-dışı (out-of-order) yanıtlar UI'ı bozmaz.
+   */
+  private parseToken = 0;
 
   /** Yüklenecek servisin id'si (eksik ekranından ön-dolu). */
   @Input({ required: true }) serviceId!: number;
@@ -88,6 +99,22 @@ export class InvoiceUploadModalComponent implements OnDestroy {
   readonly kdvSelection = signal<string>('');
   /** "Diğer" seçiliyken serbest girilen oran (yüzde). null → boş. */
   readonly kdvRateOther = signal<number | null>(null);
+  /**
+   * Kullanıcı KDV oranını ELLE değiştirdi mi? Parse otomatik-doldurması yalnızca
+   * kullanıcı henüz dokunmadıysa uygulanır (kullanıcı seçimini ezmez).
+   */
+  private kdvTouched = false;
+
+  // ---- Otomatik fatura okuma durumu (E5-03) -----------------------------
+  /** Parse isteği devam ediyor mu? "Fatura okunuyor…" göstergesi. */
+  readonly parsing = signal(false);
+  /** Son başarılı parse sonucu (null → panel gizli). */
+  readonly parsed = signal<ParsedInvoiceResponse | null>(null);
+  /**
+   * Parse sessizce başarısız oldu mu (ağ/400/500)? Yükleme akışını bloklamaz;
+   * yalnızca küçük bir bilgi notu gösterilir.
+   */
+  readonly parseFailed = signal(false);
 
   readonly submitting = signal(false);
   readonly submitError = signal<string | null>(null);
@@ -166,6 +193,72 @@ export class InvoiceUploadModalComponent implements OnDestroy {
       error: this.validate(file),
     }));
     this.queue.update((q) => [...q, ...queued]);
+
+    // E5-03: bu partideki son GEÇERLİ PDF'i otomatik oku. Birden çok dosya tek
+    // seçimde gelirse en son PDF baz alınır (son seçim = niyet).
+    const lastPdf = [...queued]
+      .reverse()
+      .find((q) => q.error === null && this.isPdf(q.file));
+    if (lastPdf) {
+      this.triggerParse(lastPdf.file);
+    }
+  }
+
+  /** Dosya adı .pdf ile bitiyor mu (büyük/küçük harf duyarsız)? */
+  private isPdf(file: File): boolean {
+    return this.extensionOf(file.name) === 'pdf';
+  }
+
+  /**
+   * E5-03: Bir PDF için otomatik okuma başlatır. Bayat yanıt koruması ({@link parseToken})
+   * ile sıra-dışı yanıtlar yok sayılır. Hata SESSİZDİR — yükleme akışını bloklamaz.
+   */
+  private triggerParse(file: File): void {
+    const token = ++this.parseToken;
+    this.parseSub?.unsubscribe();
+    this.parsing.set(true);
+    this.parsed.set(null);
+    this.parseFailed.set(false);
+
+    this.parseSub = this.service.parse(file).subscribe({
+      next: (res) => {
+        // Bayat yanıt: kullanıcı bu arada dosyayı değiştirdi → yok say.
+        if (token !== this.parseToken) {
+          return;
+        }
+        this.parsing.set(false);
+        this.parsed.set(res);
+        this.applyParsedKdv(res);
+      },
+      error: () => {
+        if (token !== this.parseToken) {
+          return;
+        }
+        // Sessiz hata: panel yok, yalnızca küçük bilgi notu. Yükleme akışı bozulmaz.
+        this.parsing.set(false);
+        this.parsed.set(null);
+        this.parseFailed.set(true);
+      },
+    });
+  }
+
+  /**
+   * Okunan KDV oranını (varsa) oran kontrolüne ön-doldurur. Yalnızca kullanıcı
+   * KDV'ye henüz ELLE dokunmadıysa uygulanır (kullanıcı seçimini ezmez).
+   */
+  private applyParsedKdv(res: ParsedInvoiceResponse): void {
+    if (res.vatRate == null || this.kdvTouched) {
+      return;
+    }
+    const rate = res.vatRate;
+    if (COMMON_KDV_RATES.includes(rate)) {
+      this.kdvSelection.set(String(rate));
+      this.kdvRateOther.set(null);
+    } else {
+      // Listede olmayan oran → "Diğer" + serbest giriş.
+      this.kdvSelection.set('other');
+      this.kdvRateOther.set(rate);
+    }
   }
 
   /** İstemci-taraflı doğrulama: izinli tip + ≤10MB. Hata yoksa null. */
@@ -209,6 +302,7 @@ export class InvoiceUploadModalComponent implements OnDestroy {
 
   onKdvSelectionChange(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
+    this.kdvTouched = true; // Kullanıcı dokundu → otomatik-doldurma artık ezmez.
     this.kdvSelection.set(value);
     // "Diğer" dışına çıkılınca serbest girişi temizle (bayat değer sızmasın).
     if (value !== 'other') {
@@ -217,6 +311,7 @@ export class InvoiceUploadModalComponent implements OnDestroy {
   }
 
   onKdvRateOtherInput(event: Event): void {
+    this.kdvTouched = true; // Kullanıcı dokundu → otomatik-doldurma artık ezmez.
     const value = (event.target as HTMLInputElement).value;
     this.kdvRateOther.set(value === '' ? null : Number(value));
   }
@@ -280,9 +375,10 @@ export class InvoiceUploadModalComponent implements OnDestroy {
   // ---- Şablon yardımcıları ----------------------------------------------
 
   ngOnDestroy(): void {
-    // Devam eden yükleme varsa iptal et → bileşen yok edildikten sonra
+    // Devam eden yükleme/okuma varsa iptal et → bileşen yok edildikten sonra
     // sinyal yazımı / event yayını olmasın.
     this.uploadSub?.unsubscribe();
+    this.parseSub?.unsubscribe();
   }
 
   /** Byte → okunabilir boyut (KB/MB). */
@@ -294,5 +390,51 @@ export class InvoiceUploadModalComponent implements OnDestroy {
       return `${(bytes / 1024).toFixed(0)} KB`;
     }
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  // ---- Okunan Bilgiler paneli (E5-03) görüntü yardımcıları ---------------
+
+  /** YYYY-MM-DD → "DD.MM.YYYY" (tr-TR). null/geçersiz → "—". */
+  formatParsedDate(iso: string | null): string {
+    if (!iso) {
+      return '—';
+    }
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) {
+      return '—';
+    }
+    return d.toLocaleDateString('tr-TR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  }
+
+  /** Sayı → tr-TR "#.##0,00". null → "—". */
+  formatParsedAmount(value: number | null): string {
+    if (value == null) {
+      return '—';
+    }
+    return value.toLocaleString('tr-TR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
+
+  /** Düz metin alanı (Fatura No, Sağlayıcı, Para Birimi). null/boş → "—". */
+  formatParsedText(value: string | null): string {
+    return value && value.trim() ? value : '—';
+  }
+
+  /** Okunan KDV oranı+tutarı tek satırda: "%20 · 36,00" / "%20" / "36,00" / "—". */
+  formatParsedVat(rate: number | null, amount: number | null): string {
+    const parts: string[] = [];
+    if (rate != null) {
+      parts.push(`%${rate}`);
+    }
+    if (amount != null) {
+      parts.push(this.formatParsedAmount(amount));
+    }
+    return parts.length ? parts.join(' · ') : '—';
   }
 }

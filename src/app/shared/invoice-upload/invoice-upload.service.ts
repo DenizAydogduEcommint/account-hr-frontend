@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import {
   InvoiceUploadRequest,
   InvoiceUploadResponse,
+  ParsedInvoiceResponse,
 } from './invoice-upload.models';
 
 /**
@@ -42,6 +43,21 @@ export class InvoiceUploadService {
     }
     return this.http.post<InvoiceUploadResponse>(
       `${this.baseUrl}/invoices`,
+      form,
+    );
+  }
+
+  /**
+   * E5-03 — Tek bir PDF faturayı sunucuda otomatik okur (parse). multipart `file`
+   * gönderir; Content-Type ELLE set EDİLMEZ (tarayıcı boundary'yi koyar). Yanıtın
+   * tüm alanları nullable; bozuk PDF 200 + warnings döner, geçersiz tip/boyut 400.
+   * Yalnızca bilgilendirme/ön-doldurma içindir; hatası yükleme akışını bloklamaz.
+   */
+  parse(file: File): Observable<ParsedInvoiceResponse> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.http.post<ParsedInvoiceResponse>(
+      `${this.baseUrl}/invoices/parse`,
       form,
     );
   }

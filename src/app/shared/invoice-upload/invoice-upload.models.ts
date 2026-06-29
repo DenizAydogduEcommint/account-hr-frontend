@@ -54,6 +54,32 @@ export interface InvoiceUploadRequest {
   files: File[];
 }
 
+/**
+ * E5-03 — Otomatik fatura okuma (parse) yanıtı (backend ParsedInvoiceResponse aynası).
+ *
+ * Sözleşme: POST /api/v1/invoices/parse (multipart `file`, ADMIN+ACCOUNTING).
+ * TÜM alanlar nullable — okunamayan alan null gelir, `warnings` doldurulur.
+ * Sadece bilgilendirme/kolaylık amaçlıdır; yükleme akışını bloklamaz.
+ */
+export interface ParsedInvoiceResponse {
+  /** Fatura numarası (okunamazsa null). */
+  invoiceNumber: string | null;
+  /** Fatura tarihi (YYYY-MM-DD, okunamazsa null). */
+  issueDate: string | null;
+  /** Brüt toplam tutar (okunamazsa null). */
+  totalAmount: number | null;
+  /** Para birimi (TRY/USD/EUR/GBP vb.; okunamazsa null). */
+  currency: string | null;
+  /** KDV tutarı (okunamazsa null). */
+  vatAmount: number | null;
+  /** KDV oranı (yüzde, ör. 20; okunamazsa null). KDV oranı kontrolünü ön-doldurur. */
+  vatRate: number | null;
+  /** Fatura kesen sağlayıcı adı (okunamazsa null). */
+  providerName: string | null;
+  /** Okunamayan/şüpheli alanlar için uyarılar (boş olabilir). */
+  warnings: string[];
+}
+
 /** Sık kullanılan KDV oranları (yüzde). "Diğer" serbest giriş şablonda eklenir. */
 export const COMMON_KDV_RATES = [0, 1, 10, 20];
 

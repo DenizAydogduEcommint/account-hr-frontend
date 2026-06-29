@@ -165,6 +165,56 @@
         </ul>
       }
 
+      <!-- Otomatik fatura okuma (E5-03) -->
+      @if (parsing()) {
+        <div class="parse-loading">
+          <span class="parse-loading__spinner" aria-hidden="true"></span>
+          <span>Fatura okunuyor…</span>
+        </div>
+      }
+
+      @if (parsed(); as p) {
+        <section class="read-panel" aria-label="Okunan Bilgiler">
+          <h4 class="read-panel__title">Okunan Bilgiler</h4>
+          <dl class="read-panel__grid">
+            <div class="read-panel__row">
+              <dt>Fatura No</dt>
+              <dd>{{ formatParsedText(p.invoiceNumber) }}</dd>
+            </div>
+            <div class="read-panel__row">
+              <dt>Tarih</dt>
+              <dd>{{ formatParsedDate(p.issueDate) }}</dd>
+            </div>
+            <div class="read-panel__row">
+              <dt>Tutar</dt>
+              <dd>
+                {{ formatParsedAmount(p.totalAmount) }}
+                @if (p.currency) {
+                  <span class="read-panel__unit">{{ formatParsedText(p.currency) }}</span>
+                }
+              </dd>
+            </div>
+            <div class="read-panel__row">
+              <dt>KDV</dt>
+              <dd>{{ formatParsedVat(p.vatRate, p.vatAmount) }}</dd>
+            </div>
+            <div class="read-panel__row read-panel__row--wide">
+              <dt>Sağlayıcı</dt>
+              <dd>{{ formatParsedText(p.providerName) }}</dd>
+            </div>
+          </dl>
+          @if (p.warnings.length > 0) {
+            <p class="read-panel__warn">Bazı alanlar okunamadı.</p>
+          }
+        </section>
+      }
+
+      @if (parseFailed()) {
+        <p class="parse-note">
+          Otomatik okuma yapılamadı, alanları elle girebilirsiniz.
+        </p>
+      }
+
       <!-- Hata mesajı -->
       @if (submitError()) {
         <div class="alert alert--error">{{ submitError() }}</div>
